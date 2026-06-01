@@ -2902,21 +2902,5 @@
     "households": 475,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "김제검산예다음",
-    "addr": "전북 김제시",
-    "movein": "2027년 3월",
-    "households": 648,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "성남금토A4 신혼희망타운",
-    "addr": "경기 성남시 수정구 금토동",
-    "movein": "2027년 11월",
-    "households": 1150,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
   }
 ]
