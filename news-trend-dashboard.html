@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일룸 뉴스클리핑 트렌드 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+  .header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    color: white;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header .sub { font-size: 13px; opacity: 0.6; margin-top: 4px; }
+
+  .filter-bar {
+    background: white;
+    padding: 12px 32px;
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: #1a1a2e;
+    color: white;
+    border-color: #1a1a2e;
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 24px 32px 0;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  .stat-card .label { font-size: 12px; color: #6b7280; font-weight: 500; margin-bottom: 8px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: #1a1a2e; }
+  .stat-card .sub-value { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px 32px;
+  }
+  .grid.full { grid-template-columns: 1fr; }
+  .grid.three { grid-template-columns: 2fr 1fr; }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+  }
+  .card h3 { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 16px; }
+
+  .keyword-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .keyword-tag {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #f3f4f6;
+    color: #374151;
+    cursor: default;
+    transition: all 0.2s;
+  }
+  .keyword-tag.rank-1 { background: #1a1a2e; color: white; font-size: 15px; padding: 6px 16px; }
+  .keyword-tag.rank-2 { background: #374151; color: white; font-size: 14px; padding: 5px 14px; }
+  .keyword-tag.rank-3 { background: #4b5563; color: white; font-size: 13px; }
+  .keyword-tag.rank-4 { background: #e5e7eb; color: #374151; }
+  .keyword-tag.rank-5 { background: #f3f4f6; color: #6b7280; }
+
+  .loading {
+    text-align: center;
+    padding: 80px;
+    color: #9ca3af;
+    font-size: 14px;
+  }
+  .error {
+    text-align: center;
+    padding: 40px;
+    color: #ef4444;
+    font-size: 14px;
+  }
+
+  canvas { max-height: 240px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📰 일룸 뉴스클리핑 트렌드 대시보드</h1>
+    <div class="sub" id="data-range">데이터 로딩 중...</div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" onclick="setFilter(30, this)">최근 30일</button>
+  <button class="filter-btn" onclick="setFilter(60, this)">최근 60일</button>
+  <button class="filter-btn" onclick="setFilter(90, this)">최근 90일</button>
+  <button class="filter-btn" onclick="setFilter(0, this)">전체</button>
+</div>
+
+<div id="app">
+  <div class="loading">📡 데이터를 불러오는 중입니다...</div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxmGhs3jjZ3XSgEHrk5RB2sdWpJ0NBPk2Z9mW8MjSAntHHt1a4Jd_78yoKnFBytGjR/exec';
+const STOP_WORDS = new Set(['관련','이후','지역','해당','뉴스','기자','대한','위해','통해','대해','으로','에서','에는','에도','이번','지난','올해','내년','이후','부터','까지','이상','이하','동안','으로','부산','경남','울산','인테리어','가구','부동산','소비자','인구','아파트']);
+
+const TOPIC_COLORS = {
+  '인테리어  가구 트렌드': '#6366f1',
+  '부동산  신규 분양 동향': '#f59e0b',
+  '유통업계  경쟁사 동향': '#10b981',
+  '소비자 라이프스타일': '#3b82f6',
+  '인구이동 이슈': '#ec4899',
+};
+const REGION_COLORS = { '부산': '#1a1a2e', '경남': '#4b5563', '울산': '#9ca3af' };
+
+let allData = [];
+let currentDays = 30;
+let charts = {};
+
+async function loadData() {
+  try {
+    const res = await fetch(SCRIPT_URL);
+    allData = await res.json();
+    if (!Array.isArray(allData)) throw new Error('데이터 형식 오류');
+    render();
+  } catch(e) {
+    document.getElementById('app').innerHTML = `<div class="error">⚠️ 데이터 로드 실패: ${e.message}<br><small>Apps Script doGet 함수가 배포되었는지 확인해주세요.</small></div>`;
+  }
+}
+
+function setFilter(days, btn) {
+  currentDays = days;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function filterData(data) {
+  if (currentDays === 0) return data;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - currentDays);
+  return data.filter(r => new Date(r['날짜'] || r.date) >= cutoff);
+}
+
+function getTopKeywords(data, n = 20) {
+  const freq = {};
+  data.forEach(r => {
+    const title = r['제목'] || r.title || '';
+    title.split(/[\s,·\-·\(\)「」【】\[\]<>]+/).forEach(w => {
+      w = w.replace(/[^가-힣a-zA-Z0-9]/g, '');
+      if (w.length >= 2 && !STOP_WORDS.has(w)) {
+        freq[w] = (freq[w] || 0) + 1;
+      }
+    });
+  });
+  return Object.entries(freq).sort((a,b) => b[1]-a[1]).slice(0, n);
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function render() {
+  const data = filterData(allData);
+
+  if (data.length === 0) {
+    document.getElementById('app').innerHTML = `<div class="loading">📭 선택한 기간에 데이터가 없습니다.<br><small>뉴스클리핑이 실행되면 자동으로 채워집니다.</small></div>`;
+    document.getElementById('data-range').textContent = '데이터 없음';
+    return;
+  }
+
+  const dates = data.map(r => r['날짜'] || r.date).filter(Boolean).sort();
+  document.getElementById('data-range').textContent = `${dates[0]} ~ ${dates[dates.length-1]} | 총 ${data.length}건`;
+
+  // 통계
+  const uniqueDates = new Set(dates).size;
+  const regions = {};
+  const topics = {};
+  data.forEach(r => {
+    const reg = r['지역'] || r.region || '';
+    const top = r['주제'] || r.topic || '';
+    regions[reg] = (regions[reg] || 0) + 1;
+    topics[top] = (topics[top] || 0) + 1;
+  });
+  const topRegion = Object.entries(regions).sort((a,b)=>b[1]-a[1])[0];
+  const topTopic = Object.entries(topics).sort((a,b)=>b[1]-a[1])[0];
+  const keywords = getTopKeywords(data);
+
+  document.getElementById('app').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="label">수집 기사 수</div><div class="value">${data.length}</div><div class="sub-value">${uniqueDates}일치 데이터</div></div>
+      <div class="stat-card"><div class="label">가장 많은 지역</div><div class="value">${topRegion?.[0] || '-'}</div><div class="sub-value">${topRegion?.[1] || 0}건</div></div>
+      <div class="stat-card"><div class="label">가장 많은 주제</div><div class="value" style="font-size:16px;padding-top:4px">${(topTopic?.[0]||'-').substring(0,10)}</div><div class="sub-value">${topTopic?.[1]||0}건</div></div>
+      <div class="stat-card"><div class="label">상위 키워드</div><div class="value" style="font-size:18px;padding-top:4px">${keywords[0]?.[0] || '-'}</div><div class="sub-value">${keywords[0]?.[1] || 0}회 등장</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h3>📅 주별 뉴스 수집 추이</h3><canvas id="weeklyChart"></canvas></div>
+      <div class="card"><h3>🗺️ 지역별 뉴스 분포</h3><canvas id="regionChart"></canvas></div>
+    </div>
+
+    <div class="grid three">
+      <div class="card"><h3>📌 요일별 주제 분포</h3><canvas id="topicChart"></canvas></div>
+      <div class="card"><h3>🏙️ 지역별 주제 편중</h3><canvas id="regionTopicChart"></canvas></div>
+    </div>
+
+    <div class="grid full" style="padding-bottom:32px">
+      <div class="card">
+        <h3>🔑 자주 등장한 키워드</h3>
+        <div class="keyword-list" id="keywords"></div>
+      </div>
+    </div>
+  `;
+
+  // 키워드 태그
+  const kwContainer = document.getElementById('keywords');
+  keywords.forEach(([word, cnt], i) => {
+    const rank = i < 3 ? `rank-${i+1}` : i < 6 ? 'rank-4' : 'rank-5';
+    kwContainer.innerHTML += `<span class="keyword-tag ${rank}">${word} <small>${cnt}</small></span>`;
+  });
+
+  // 주별 트렌드
+  const weekMap = {};
+  data.forEach(r => {
+    const d = new Date(r['날짜'] || r.date);
+    if (isNaN(d)) return;
+    const mon = new Date(d); mon.setDate(d.getDate() - d.getDay() + 1);
+    const key = `${mon.getMonth()+1}/${mon.getDate()}주`;
+    weekMap[key] = (weekMap[key] || 0) + 1;
+  });
+  const weekLabels = Object.keys(weekMap).sort();
+  destroyChart('weekly');
+  charts.weekly = new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+      labels: weekLabels,
+      datasets: [{ label: '수집 건수', data: weekLabels.map(k => weekMap[k]), backgroundColor: '#1a1a2e', borderRadius: 4 }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+
+  // 지역 도넛
+  const regionLabels = Object.keys(regions);
+  destroyChart('region');
+  charts.region = new Chart(document.getElementById('regionChart'), {
+    type: 'doughnut',
+    data: {
+      labels: regionLabels,
+      datasets: [{ data: regionLabels.map(r => regions[r]), backgroundColor: regionLabels.map(r => REGION_COLORS[r] || '#d1d5db'), borderWidth: 0 }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } }, cutout: '65%' }
+  });
+
+  // 주제별 가로 바
+  const topicLabels = Object.keys(topics);
+  const topicColors = topicLabels.map((t,i) => {
+    const colors = ['#6366f1','#f59e0b','#10b981','#3b82f6','#ec4899'];
+    return colors[i % colors.length];
+  });
+  destroyChart('topic');
+  charts.topic = new Chart(document.getElementById('topicChart'), {
+    type: 'bar',
+    data: {
+      labels: topicLabels.map(t => t.length > 12 ? t.substring(0,12)+'…' : t),
+      datasets: [{ data: topicLabels.map(t => topics[t]), backgroundColor: topicColors, borderRadius: 4 }]
+    },
+    options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+  });
+
+  // 지역별 주제 스택
+  const regionList = ['부산','경남','울산'];
+  const topicList = Object.keys(topics);
+  const stackData = {};
+  data.forEach(r => {
+    const reg = r['지역'] || r.region || '';
+    const top = r['주제'] || r.topic || '';
+    if (!stackData[top]) stackData[top] = {};
+    stackData[top][reg] = (stackData[top][reg] || 0) + 1;
+  });
+  destroyChart('regionTopic');
+  charts.regionTopic = new Chart(document.getElementById('regionTopicChart'), {
+    type: 'bar',
+    data: {
+      labels: regionList,
+      datasets: topicList.map((t, i) => ({
+        label: t.length > 8 ? t.substring(0,8)+'…' : t,
+        data: regionList.map(r => stackData[t]?.[r] || 0),
+        backgroundColor: topicColors[i],
+        borderRadius: 2,
+      }))
+    },
+    options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } }
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>

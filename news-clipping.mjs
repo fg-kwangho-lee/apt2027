@@ -3,6 +3,7 @@
 import https from 'https';
 
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxmGhs3jjZ3XSgEHrk5RB2sdWpJ0NBPk2Z9mW8MjSAntHHt1a4Jd_78yoKnFBytGjR/exec';
 const NEWS_PER_REGION = 1;
 
 // sections가 1개면 일반 구조, 여러 개면 꼭지별로 분리 출력
@@ -33,11 +34,25 @@ const TOPICS = {
   },
 };
 
-const REGIONS = [
+// 슬랙 발송 대상
+const SLACK_REGIONS = [
   { label: '🏙️ 부산', keyword: '부산' },
   { label: '🌊 경남', keyword: '경남' },
   { label: '🏭 울산', keyword: '울산' },
 ];
+
+// 시트 누적 전용 (슬랙 미발송)
+const SHEET_REGIONS = [
+  { label: '서울', keyword: '서울' },
+  { label: '경기', keyword: '경기' },
+  { label: '대전', keyword: '대전' },
+  { label: '광주', keyword: '광주' },
+  { label: '대구', keyword: '대구' },
+  { label: '제주', keyword: '제주' },
+  { label: '강원', keyword: '강원' },
+];
+
+const ALL_REGIONS = [...SLACK_REGIONS, ...SHEET_REGIONS];
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -82,6 +97,40 @@ async function fetchNews(query, count) {
   const url = `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
   const xml = await fetchUrl(url);
   return parseRssItems(xml, count);
+}
+
+async function postJson(url, body, redirectCount = 0) {
+  return new Promise((resolve, reject) => {
+    if (redirectCount > 5) return reject(new Error('Too many redirects'));
+    const bodyStr = JSON.stringify(body);
+    const urlObj = new URL(url);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
+    };
+    const req = https.request(options, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return postJson(res.headers.location, body, redirectCount + 1).then(resolve).catch(reject);
+      }
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', reject);
+    req.write(bodyStr);
+    req.end();
+  });
+}
+
+async function saveToSheet(rows) {
+  try {
+    const result = await postJson(APPS_SCRIPT_URL, rows);
+    console.log('시트 저장 완료:', result);
+  } catch (e) {
+    console.error('시트 저장 실패 (슬랙은 정상):', e.message);
+  }
 }
 
 async function postToSlack(payload) {
@@ -132,24 +181,35 @@ async function main() {
     },
   ];
 
-  for (const region of REGIONS) {
+  const newsPerSection = topic.sections.length === 1 ? 3 : 1;
+  const sheetRows = [];
+  const collectedAt = new Date().toISOString();
+  const isoDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const topicLabel = topic.label.replace(/\p{Emoji}/gu, '').trim();
+
+  // 슬랙 + 시트
+  for (const region of SLACK_REGIONS) {
     console.log(`  → ${region.label} 수집 중...`);
     const items = [];
     for (const section of topic.sections) {
-      const news = await fetchNews(`${region.keyword} ${section.query}`, 1);
-      if (news.length > 0) items.push(news[0]);
+      const news = await fetchNews(`${region.keyword} ${section.query}`, newsPerSection);
+      items.push(...news);
+      news.forEach(n => sheetRows.push({ date: isoDate, day: DAY_NAMES[dayOfWeek], topic: topicLabel, region: region.keyword, title: n.title, url: n.link, collected_at: collectedAt }));
     }
-
     blocks.push({ type: 'divider' });
-
     const newsText = items.length > 0
       ? items.map((item, i) => `${i + 1}. <${item.link}|${item.title}>`).join('\n')
       : '수집된 뉴스가 없습니다.';
+    blocks.push({ type: 'section', text: { type: 'mrkdwn', text: `*${region.label}*\n${newsText}` } });
+  }
 
-    blocks.push({
-      type: 'section',
-      text: { type: 'mrkdwn', text: `*${region.label}*\n${newsText}` },
-    });
+  // 시트 전용 (슬랙 미발송)
+  for (const region of SHEET_REGIONS) {
+    console.log(`  → ${region.label} 시트 수집 중...`);
+    for (const section of topic.sections) {
+      const news = await fetchNews(`${region.keyword} ${section.query}`, newsPerSection);
+      news.forEach(n => sheetRows.push({ date: isoDate, day: DAY_NAMES[dayOfWeek], topic: topicLabel, region: region.keyword, title: n.title, url: n.link, collected_at: collectedAt }));
+    }
   }
 
   blocks.push({
@@ -157,8 +217,11 @@ async function main() {
     elements: [{ type: 'mrkdwn', text: '출처: Google News · 자동 수집' }],
   });
 
-  const result = await postToSlack({ blocks });
-  console.log('슬랙 전송 완료:', result);
+  const [slackResult] = await Promise.all([
+    postToSlack({ blocks }),
+    saveToSheet(sheetRows),
+  ]);
+  console.log('슬랙 전송 완료:', slackResult);
 }
 
 main().catch(console.error);
