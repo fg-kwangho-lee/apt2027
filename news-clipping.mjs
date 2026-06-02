@@ -93,10 +93,15 @@ function parseRssItems(xml, count) {
 }
 
 async function fetchNews(query, count) {
-  const encoded = encodeURIComponent(query);
-  const url = `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
-  const xml = await fetchUrl(url);
-  return parseRssItems(xml, count);
+  try {
+    const encoded = encodeURIComponent(query);
+    const url = `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
+    const xml = await fetchUrl(url);
+    return parseRssItems(xml, count);
+  } catch (e) {
+    console.error(`fetch 실패 (${query.substring(0, 20)}): ${e.message}`);
+    return [];
+  }
 }
 
 async function postJson(url, body, redirectCount = 0) {
@@ -217,11 +222,12 @@ async function main() {
     elements: [{ type: 'mrkdwn', text: '출처: Google News · 자동 수집' }],
   });
 
-  const [slackResult] = await Promise.all([
-    postToSlack({ blocks }),
-    saveToSheet(sheetRows),
-  ]);
+  // 슬랙 먼저 전송 (시트 저장 전에)
+  const slackResult = await postToSlack({ blocks });
   console.log('슬랙 전송 완료:', slackResult);
+
+  // 시트 저장 (슬랙 이후)
+  await saveToSheet(sheetRows);
 }
 
 main().catch(console.error);
