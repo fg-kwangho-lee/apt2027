@@ -91,6 +91,32 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
 @keyframes spin { to { transform: rotate(360deg); } }
 .no-data { font-size: 13px; color: #bbb; padding: 30px 0; text-align: center; }
 
+/* NEWS BANNER */
+.news-banner {
+  background: #fff; border-left: 4px solid #c80a1e;
+  padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 16px;
+}
+.news-banner-topic { font-size: 13px; font-weight: 700; color: #c80a1e; white-space: nowrap; flex-shrink: 0; }
+.news-banner-items { display: flex; flex-wrap: wrap; gap: 6px 20px; flex: 1; }
+.news-banner-item { font-size: 12px; color: #444; }
+.news-banner-item a { color: #333; text-decoration: none; }
+.news-banner-item a:hover { color: #c80a1e; text-decoration: underline; }
+.news-banner-region { font-size: 11px; color: #999; white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+
+/* NEWS TAB */
+.news-topic-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 16px; }
+.news-topic-card { background: #fff; padding: 16px; border-top: 3px solid #E0E0E0; cursor: pointer; }
+.news-topic-card.active { border-top-color: #c80a1e; }
+.news-topic-label { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 4px; }
+.news-topic-day { font-size: 11px; color: #bbb; }
+.news-articles { display: flex; flex-direction: column; gap: 10px; }
+.news-article { background: #fff; padding: 16px 20px; border-left: 3px solid #F0F0F0; }
+.news-article:hover { border-left-color: #c80a1e; }
+.news-article-title a { font-size: 14px; font-weight: 600; color: #333; text-decoration: none; line-height: 1.4; }
+.news-article-title a:hover { color: #c80a1e; }
+.news-article-meta { font-size: 11px; color: #bbb; margin-top: 5px; }
+.news-loading { text-align: center; padding: 30px; color: #bbb; font-size: 13px; }
+
 /* MAIN TABS */
 .main-tab-nav {
   display: flex; gap: 0; margin-bottom: 20px;
@@ -276,11 +302,23 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
       </div>
     </div>
 
+    <!-- 뉴스 배너 -->
+    <div id="news-banner" style="background:#fff;border-left:4px solid #c80a1e;padding:16px 20px;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span id="news-banner-topic" style="font-size:13px;font-weight:700;color:#c80a1e;">📰 오늘의 뉴스</span>
+        <span style="font-size:11px;color:#bbb;">오전 8:30 기준 · Google News</span>
+      </div>
+      <div id="news-banner-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:12px;color:#bbb;">뉴스 불러오는 중...</div>
+      </div>
+    </div>
+
     <!-- Main Tab Nav -->
     <div class="main-tab-nav">
       <button class="main-tab-btn active" id="mtab-sales" onclick="switchMainTab('sales')">매출실적</button>
       <button class="main-tab-btn" id="mtab-market" onclick="switchMainTab('market')">시장점유율</button>
       <button class="main-tab-btn" id="mtab-item" onclick="switchMainTab('item')">품목별 매출현황</button>
+      <button class="main-tab-btn" id="mtab-news" onclick="switchMainTab('news')">월간 뉴스 정리</button>
     </div>
 
     <!-- Tab: 매출실적 -->
@@ -306,7 +344,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
       </div>
       <div class="chart-row row-1">
         <div class="card">
-          <div class="card-title">납품처 동별 매출</div>
+          <div class="card-title">지역별 매출 <span style="font-size:12px;font-weight:400;color:#999;">('동' 기준)</span></div>
           <div class="card-sub" id="dong-breadcrumb">시/도 선택 → 구/시군 선택 → 동 표시</div>
           <div id="dong-sido-filter" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-bottom:8px;padding-bottom:4px;scrollbar-width:none;"></div>
           <div style="border-top:1px solid #F0F0F0;margin-bottom:8px;"></div>
@@ -388,6 +426,14 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Tab: 월간 뉴스 정리 -->
+    <div id="tab-news" style="display:none;">
+      <iframe src="news-trend-dashboard.html"
+        style="width:100%;height:calc(100vh - 220px);border:none;border-radius:0;"
+        id="news-iframe">
+      </iframe>
     </div>
 
   </div>
@@ -585,7 +631,7 @@ const STORES = {
   '스타필드수원(6층)':  { pw:'237664', office:'경기사업소' },
   '스타필드수원키즈(3층)': { pw:'237665', office:'경기사업소' },
   '롯데수지':           { pw:'IL0019', office:'경기사업소' },
-  '롯데안산(팝업)':     { pw:'62LM30', office:'경기사업소' },
+  '롯데안산':           { pw:'62LM30', office:'경기사업소' },
   '송도5':              { pw:'IL0000', office:'경기사업소' },
   '인천검단':           { pw:'62LM12', office:'경기사업소' },
   '인천중앙2':          { pw:'61LM29', office:'경기사업소' },
@@ -890,7 +936,7 @@ function renderDashboard(){
     const [y,m1]=months[0].split('-');
     const [,m2]=latest.split('-');
     document.getElementById('h-period').textContent=
-      months.length===1?`${y}년 ${+m1}월 납기 기준`:`${y}년 ${+m1}~${+m2}월 납기 기준`;
+      months.length===1?`${y}년 ${+m1}월 납기 기준 · VAT별도`:`${y}년 ${+m1}~${+m2}월 납기 기준 · VAT별도`;
   }
 
   renderKPI(sales, officeSales, latest, prev, months, office);
@@ -898,6 +944,9 @@ function renderDashboard(){
   renderRank(officeSales, office);
   renderRegion(sales);
   renderDong(sales);
+  renderNewsBanner();
+  prefetchNews();
+  scheduleNewsRefresh();
 }
 
 function renderKPI(sales, officeSales, latest, prev, months, office){
@@ -1133,9 +1182,12 @@ function renderDongChart() {
   const total = sorted.reduce((s,[,v])=>s+v, 0);
 
   // 구 전체 매출 상단 표시
+  const sidoTot = sidoTotal(currentDongSido);
+  const sidoPct = sidoTot > 0 ? (total / sidoTot * 100).toFixed(1) : '0.0';
   totalEl.innerHTML = `
     <span style="font-size:12px;color:#999;">${currentDongSigungu} 전체 매출</span>
-    <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#c80a1e;margin-left:12px;">${fmt(total)}원</span>`;
+    <span style="font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:#c80a1e;margin-left:12px;">${fmt(total)}원</span>
+    <span style="font-size:12px;color:#999;margin-left:8px;">(${currentDongSido} 內 비중 ${sidoPct}%)</span>`;
 
   const h = Math.max(200, sorted.length * 26);
   wrap.style.height = h + 'px';
@@ -1220,7 +1272,7 @@ function renderComp(storeName, months){
 
 // ===== MAIN TAB =====
 function switchMainTab(tab) {
-  ['sales','market','item'].forEach(t => {
+  ['sales','market','item','news'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===tab ? '' : 'none';
     document.getElementById('mtab-'+t).classList.toggle('active', t===tab);
   });
@@ -1231,6 +1283,7 @@ function switchMainTab(tab) {
     renderBrandTrend(currentStore, months);
   }
   if(tab==='item') renderItems();
+  // news 탭은 iframe 자동 로드
 }
 
 function renderMarketShare() {
@@ -1286,8 +1339,8 @@ function renderMarketShare() {
   const innerTotal = innerData.reduce((s,v)=>s+v, 0);
   const outerTotal = outerData.reduce((s,v)=>s+v, 0);
 
-  // 바깥(전국) 링은 같은 색 계열에서 약간 밝게
-  const outerBg = shareBg.map(c => c + 'AA');
+  // 바깥(전국) 링은 같은 색 계열에서 많이 옅게
+  const outerBg = shareBg.map(c => c + '40');
 
   // 중앙 텍스트 + 세그먼트 퍼센트 레이블 플러그인
   const centerTextPlugin = {
@@ -1362,11 +1415,21 @@ function renderMarketShare() {
   const statsEl = document.getElementById('mshare-stats');
   if(!statsEl) return;
 
+  // 해당 상권 매장 수 집계 (현재 매장 기준 상권 내 경쟁사 매장 수)
+  const nationalStoreCount = {};
+  for (const brand of shareLabels.slice(1)) {
+    const names = new Set(
+      entries.filter(e => e.brands[brand]?.name).map(e => e.brands[brand].name)
+    );
+    nationalStoreCount[brand] = names;
+  }
+
   const header = `
     <tr style="border-bottom:2px solid #E8E8E8;">
       <th style="text-align:left;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">브랜드</th>
       <th style="text-align:right;padding:7px 8px;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">전국평균</th>
-      <th style="text-align:right;padding:7px 0;font-size:11px;color:#c80a1e;font-weight:600;letter-spacing:0.3px;">해당 상권</th>
+      <th style="text-align:right;padding:7px 8px;font-size:11px;color:#c80a1e;font-weight:600;letter-spacing:0.3px;">해당 상권</th>
+      <th style="text-align:right;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">매장 수</th>
     </tr>`;
 
   const dataRows = shareLabels.map((label, i) => {
@@ -1376,17 +1439,25 @@ function renderMarketShare() {
     const isIloom = label === '일룸';
     const diff = parseFloat(oPct) - parseFloat(iPct);
     const arrow = diff === 0 ? '' : `<span style="font-size:10px;color:${diff>0?'#16a34a':RED};margin-left:4px;">${diff>0?'▲':'▼'}${Math.abs(diff).toFixed(1)}%p</span>`;
+
+    const storeName = isIloom ? currentStore : (entry.brands[label]?.name || '');
+    const storeCount = isIloom ? '1개점' : (nationalStoreCount[label]?.size ? `${nationalStoreCount[label].size}개점` : '-');
+
     return `<tr style="border-bottom:1px solid #F4F4F4;">
       <td style="padding:7px 0;">
         <div style="display:flex;align-items:center;gap:7px;">
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${shareBg[i]};flex-shrink:0;"></span>
-          <span style="font-size:13px;font-weight:${isIloom?700:400};color:${isIloom?'#222':'#555'};">${label}</span>
+          <div>
+            <div style="font-size:13px;font-weight:${isIloom?700:400};color:${isIloom?'#222':'#555'};">${label}</div>
+            ${storeName ? `<div style="font-size:10px;color:#999;margin-top:1px;">${storeName}</div>` : ''}
+          </div>
         </div>
       </td>
       <td style="padding:7px 8px;font-family:'Montserrat',sans-serif;font-size:13px;color:#aaa;text-align:right;">${iPct}%</td>
-      <td style="padding:7px 0;text-align:right;">
+      <td style="padding:7px 8px;text-align:right;">
         <span style="font-family:'Montserrat',sans-serif;font-size:13px;font-weight:${isIloom?700:500};color:${isIloom?RED:'#444'};">${oPct}%</span>${arrow}
       </td>
+      <td style="padding:7px 0;font-family:'Montserrat',sans-serif;font-size:12px;color:#555;text-align:right;font-weight:600;">${storeCount}</td>
     </tr>`;
   }).join('');
 
@@ -1555,6 +1626,335 @@ function renderBrandTrend(storeName, months) {
       }
     }
   });
+}
+
+// ===== 뉴스 클리핑 =====
+const NEWS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyxmGhs3jjZ3XSgEHrk5RB2sdWpJ0NBPk2Z9mW8MjSAntHHt1a4Jd_78yoKnFBytGjR/exec';
+let newsSheetRows = [];
+
+async function loadNewsSheet() {
+  if (newsSheetRows.length) return newsSheetRows;
+  try {
+    const res  = await fetch(NEWS_SCRIPT_URL);
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    newsSheetRows = data.filter(r => r['날짜'] || r['date']);
+    return newsSheetRows;
+  } catch(e) { return []; }
+}
+
+const NEWS_TOPICS = {
+  1: { label: '🛋️ 인테리어/가구 트렌드',   day: '월', query: '인테리어 가구 트렌드' },
+  2: { label: '🏠 부동산/신규 분양 동향',   day: '화', query: '부동산 분양 청약' },
+  3: { label: '🏪 유통업계/경쟁사 동향',    day: '수', query: '가구 유통 한샘 이케아 현대리바트' },
+  4: { label: '🌿 소비자 라이프스타일',     day: '목', query: '소비자 라이프스타일 트렌드' },
+  5: { label: '📊 인구이동 이슈',           day: '금', query: '아파트 입주 이사 인구 전입 전출' },
+};
+const OFFICE_REGIONS = {
+  '서울사업소': [{ label: '서울', kw: '서울' }, { label: '수도권', kw: '수도권' }],
+  '경기사업소': [{ label: '경기', kw: '경기' }, { label: '인천', kw: '인천' }],
+  '대전사업소': [{ label: '대전', kw: '대전' }, { label: '충청', kw: '충청' }, { label: '세종', kw: '세종' }],
+  '광주사업소': [{ label: '광주', kw: '광주' }, { label: '전남', kw: '전남' }, { label: '전북', kw: '전북' }],
+  '대구사업소': [{ label: '대구', kw: '대구' }, { label: '경북', kw: '경북' }],
+  '부산사업소': [{ label: '부산', kw: '부산' }, { label: '경남', kw: '경남' }, { label: '울산', kw: '울산' }],
+};
+const CORS_PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+let newsCurrentTopic = null;
+let newsCurrentRegion = null;
+let newsCache = {};
+
+function getStoreCity() {
+  const n = currentStore || '';
+  if (/부산|센텀|광복|동부산|연제|하단/.test(n))      return { label:'부산', kw:'부산' };
+  if (/울산/.test(n))                                  return { label:'울산', kw:'울산' };
+  if (/거제|김해|마산|양산|진주|창원/.test(n))          return { label:'경남', kw:'경남' };
+  if (/대구|달서|수성/.test(n))                         return { label:'대구', kw:'대구' };
+  if (/경주|구미|안동|포항/.test(n))                    return { label:'경북', kw:'경북' };
+  if (/원주|춘천/.test(n))                              return { label:'강원', kw:'강원' };
+  if (/광주|봉선|광천|빛고을|중화산|덕진/.test(n))      return { label:'광주', kw:'광주' };
+  if (/순천|전군/.test(n))                              return { label:'전남', kw:'전남' };
+  if (/제주/.test(n))                                   return { label:'제주', kw:'제주' };
+  if (/대전|서대전|둔산|유성/.test(n))                  return { label:'대전', kw:'대전' };
+  if (/세종/.test(n))                                   return { label:'세종', kw:'세종' };
+  if (/천안|서산|청주|청남/.test(n))                    return { label:'충청', kw:'충청' };
+  if (/송도|검단|인천|김포|부천/.test(n))               return { label:'인천', kw:'인천' };
+  if (/수원|분당|고양|파주|일산|광명|안산|안양|기흥|동탄|평촌|평택|의정부|시흥|구리|스타필드|신세계/.test(n)) return { label:'경기', kw:'경기' };
+  if (/논현|마포|송파|용산|노원|강동|청량리|미아|영등포|목동/.test(n)) return { label:'서울', kw:'서울' };
+  // fallback: 사업소 기준
+  const off = STORES[n]?.office || '';
+  const m = {'서울사업소':'서울','경기사업소':'경기','대전사업소':'대전','광주사업소':'광주','대구사업소':'대구','부산사업소':'부산'};
+  return { label: m[off]||'전국', kw: m[off]||'' };
+}
+
+function getStoreRegions() {
+  const office = currentStore ? STORES[currentStore]?.office : '';
+  return OFFICE_REGIONS[office] || [{ label: '전국', kw: '' }];
+}
+
+function getTodayTopicKey() {
+  const d = new Date().getDay(); // 0=일,1=월...5=금,6=토
+  return NEWS_TOPICS[d] ? d : 1; // 주말이면 월요일 주제
+}
+
+function parseRSS(xml, count) {
+  const items = [];
+  const re = /<item>([\s\S]*?)<\/item>/g;
+  let m;
+  while ((m = re.exec(xml)) !== null && items.length < count) {
+    const block = m[1];
+    const title = (block.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/)?.[1]
+                || block.match(/<title>(.*?)<\/title>/)?.[1] || '').trim()
+                .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"');
+    const link = (block.match(/<link>(.*?)<\/link>/)?.[1]
+              || block.match(/<guid[^>]*>(.*?)<\/guid>/)?.[1] || '').trim();
+    const pub  = (block.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '').trim();
+    const src  = (block.match(/<source[^>]*>(.*?)<\/source>/)?.[1] || '').trim();
+    if (title && link) items.push({ title, link, pub, src });
+  }
+  return items;
+}
+
+async function fetchRSS(query, count) {
+  const q = encodeURIComponent(query);
+  const rssUrl = `https://news.google.com/rss/search?q=${q}&hl=ko&gl=KR&ceid=KR:ko`;
+  const cacheKey = q; // count 제외 → 배너·탭·프리페치 모두 동일 캐시 공유
+  if (newsCache[cacheKey]) return newsCache[cacheKey].slice(0, count);
+  for (const proxyFn of CORS_PROXIES) {
+    try {
+      const res = await fetch(proxyFn(rssUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) continue;
+      const xml = await res.text();
+      const items = parseRSS(xml, 10); // 최대 10개 캐시
+      if (items.length) { newsCache[cacheKey] = items; return items.slice(0, count); }
+    } catch (e) { continue; }
+  }
+  return [];
+}
+
+async function fetchNewsRSS(query, regionKw, count = 5) {
+  return await fetchRSS(regionKw ? `${regionKw} ${query}` : query, count);
+}
+
+function renderNewsTopicGrid() {
+  const todayKey = getTodayTopicKey();
+  const grid = document.getElementById('news-topic-grid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(NEWS_TOPICS).map(([k, t]) => `
+    <div class="news-topic-card${+k === (newsCurrentTopic||todayKey) ? ' active' : ''}"
+         onclick="selectNewsTopic(${k})">
+      <div class="news-topic-day">${t.day}요일</div>
+      <div class="news-topic-label">${t.label}</div>
+    </div>`).join('');
+}
+
+function renderNewsRegionFilter() {
+  const regions = getStoreRegions();
+  if (!newsCurrentRegion) newsCurrentRegion = regions[0].kw;
+  const wrap = document.getElementById('news-region-filter');
+  if (!wrap) return;
+  wrap.innerHTML = regions.map(r => `
+    <button onclick="selectNewsRegion('${r.kw}','${r.label}')" style="padding:4px 12px;font-size:12px;font-weight:700;border:1px solid ${newsCurrentRegion===r.kw?'#c80a1e':'#E0E0E0'};background:${newsCurrentRegion===r.kw?'#c80a1e':'#fff'};color:${newsCurrentRegion===r.kw?'#fff':'#888'};cursor:pointer;font-family:'Noto Sans KR',sans-serif;border-radius:2px;">${r.label}</button>`
+  ).join('');
+}
+
+async function selectNewsTopic(key) {
+  newsCurrentTopic = +key;
+  renderNewsTopicGrid();
+  await loadNewsArticles();
+}
+
+async function selectNewsRegion(kw, label) {
+  newsCurrentRegion = kw;
+  renderNewsRegionFilter();
+  await loadNewsArticles();
+}
+
+async function loadNewsArticles() {
+  const wrap = document.getElementById('news-articles-wrap');
+  const status = document.getElementById('news-fetch-status');
+  if (!wrap) return;
+  const topicKey = newsCurrentTopic || getTodayTopicKey();
+  const topic = NEWS_TOPICS[topicKey];
+  if (!topic) return;
+  wrap.innerHTML = '<div class="news-loading">뉴스 불러오는 중...</div>';
+  if (status) status.textContent = '';
+  const items = await fetchNewsRSS(topic.query, newsCurrentRegion, 10);
+  if (!items.length) {
+    wrap.innerHTML = '<div class="news-loading">뉴스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';
+    return;
+  }
+  if (status) status.textContent = `${items.length}건 · 출처: Google News`;
+  wrap.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:#333;margin-bottom:12px;">${topic.label} 최신 뉴스</div>
+    <div class="news-articles">
+      ${items.map((item, i) => `
+        <div class="news-article">
+          <div class="news-article-title">
+            <span style="font-size:12px;color:#c80a1e;font-weight:700;margin-right:8px;">${i+1}</span>
+            <a href="${item.link}" target="_blank">${item.title}</a>
+          </div>
+          ${item.src || item.pub ? `<div class="news-article-meta">${[item.src, item.pub].filter(Boolean).join(' · ')}</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+function newsCardHTML(key, topic, items) {
+  const rep  = items[0];
+  const rest = items.slice(1, 4);
+  const isToday = +key === getTodayTopicKey();
+  return `
+    <div style="background:#fff;padding:20px 24px;margin-bottom:12px;border-left:4px solid ${isToday?'#c80a1e':'#E0E0E0'};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <span style="font-size:11px;font-weight:700;color:${isToday?'#c80a1e':'#999'};border:1px solid ${isToday?'#c80a1e':'#ddd'};padding:2px 10px;border-radius:20px;">${topic.day}요일</span>
+        <span style="font-size:14px;font-weight:700;color:#333;">${topic.label}</span>
+        ${isToday?'<span style="font-size:11px;color:#fff;background:#c80a1e;padding:1px 8px;border-radius:10px;">오늘</span>':''}
+      </div>
+      ${rep ? `
+      <div style="background:#FFF8F8;padding:12px 16px;margin-bottom:12px;border-radius:2px;">
+        <div style="font-size:10px;font-weight:700;color:#c80a1e;margin-bottom:6px;">📌 대표 기사</div>
+        <a href="${rep.link}" target="_blank" style="font-size:13px;font-weight:600;color:#222;text-decoration:none;line-height:1.5;">${rep.title}</a>
+        ${rep.src?`<div style="font-size:11px;color:#bbb;margin-top:4px;">${rep.src}</div>`:''}
+      </div>` : '<div style="font-size:12px;color:#bbb;padding:8px 0;">해당 상권에 관련 뉴스가 없습니다.</div>'}
+      ${rest.length ? `
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        ${rest.map((item,i)=>`
+          <div style="display:flex;align-items:flex-start;gap:8px;">
+            <span style="font-size:11px;color:#bbb;font-weight:700;flex-shrink:0;margin-top:1px;">${i+2}</span>
+            <a href="${item.link}" target="_blank" style="font-size:12px;color:#555;text-decoration:none;line-height:1.45;"
+               onmouseover="this.style.color='#c80a1e'" onmouseout="this.style.color='#555'">${item.title}</a>
+          </div>`).join('')}
+      </div>` : ''}
+    </div>`;
+}
+
+async function initNewsTab() {
+  const city = getStoreCity();
+  const wrap = document.getElementById('news-monthly-wrap');
+  const monthLabel = document.getElementById('news-month-label');
+  const monthSub   = document.getElementById('news-month-sub');
+  if (!wrap) return;
+
+  const now = new Date();
+  if (monthLabel) monthLabel.textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 뉴스 트렌드`;
+  if (monthSub)   monthSub.textContent   = `${city.label} 지역 · 주제별 최신 뉴스 · Google News 자동 수집`;
+
+  const topicEntries = Object.entries(NEWS_TOPICS);
+
+  // 카드 뼈대 즉시 표시 (로딩 스피너 포함)
+  wrap.innerHTML = topicEntries.map(([key, topic]) => {
+    const isToday = +key === getTodayTopicKey();
+    return `<div id="news-card-${key}" style="background:#fff;padding:20px 24px;margin-bottom:12px;border-left:4px solid ${isToday?'#c80a1e':'#E0E0E0'};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="font-size:11px;font-weight:700;color:${isToday?'#c80a1e':'#999'};border:1px solid ${isToday?'#c80a1e':'#ddd'};padding:2px 10px;border-radius:20px;">${topic.day}요일</span>
+        <span style="font-size:14px;font-weight:700;color:#333;">${topic.label}</span>
+        ${isToday?'<span style="font-size:11px;color:#fff;background:#c80a1e;padding:1px 8px;border-radius:10px;">오늘</span>':''}
+      </div>
+      <div style="font-size:12px;color:#bbb;padding:6px 0;">수집 중...</div>
+    </div>`;
+  }).join('');
+
+  // 각 주제 순차적으로 채우기 (캐시 있으면 즉시, 없으면 fetch)
+  topicEntries.forEach(async ([key, topic]) => {
+    const items = await fetchNewsRSS(topic.query, city.kw, 5);
+    const card = document.getElementById(`news-card-${key}`);
+    if (card) card.outerHTML = newsCardHTML(key, topic, items);
+  });
+}
+
+// 매일 오전 9시 뉴스 자동 갱신
+function scheduleNewsRefresh() {
+  const now   = new Date();
+  const next9 = new Date(now);
+  next9.setHours(9, 0, 0, 0);
+  if (now >= next9) next9.setDate(next9.getDate() + 1); // 이미 9시 지났으면 내일 9시
+
+  const msUntil = next9 - now;
+  const hh = String(next9.getHours()).padStart(2,'0');
+  const mm = String(next9.getMinutes()).padStart(2,'0');
+  console.log(`[뉴스 갱신] 다음 업데이트: ${next9.toLocaleDateString()} ${hh}:${mm} (${Math.round(msUntil/60000)}분 후)`);
+
+  setTimeout(async () => {
+    newsSheetRows = [];   // 시트 캐시 초기화
+    newsCache     = {};   // RSS 캐시 초기화
+    await renderNewsBanner();
+    console.log('[뉴스 갱신] 오전 9시 업데이트 완료');
+    setInterval(async () => {  // 이후 24시간마다 반복
+      newsSheetRows = {};
+      newsCache     = {};
+      await renderNewsBanner();
+    }, 24 * 60 * 60 * 1000);
+  }, msUntil);
+}
+
+// 로그인 직후 백그라운드 프리페치 → 완료 후 배너 재렌더
+async function prefetchNews() {
+  const city = getStoreCity();
+  const todayKey = getTodayTopicKey();
+  const todayTopic = NEWS_TOPICS[todayKey];
+  // 오늘 주제 먼저 fetch → 배너 재렌더
+  await fetchNewsRSS(todayTopic.query, city.kw, 5);
+  renderNewsBanner();
+  // 나머지 주제 백그라운드
+  Object.entries(NEWS_TOPICS).forEach(([k, topic]) => {
+    if (+k !== todayKey) fetchNewsRSS(topic.query, city.kw, 5);
+  });
+}
+
+async function renderNewsBanner() {
+  const topicEl = document.getElementById('news-banner-topic');
+  const bodyEl  = document.getElementById('news-banner-body');
+  if (!topicEl || !bodyEl) return;
+
+  const city = getStoreCity();
+  const rows = await loadNewsSheet();
+
+  if (!rows.length) {
+    topicEl.textContent = '📰 오늘의 뉴스클리핑';
+    bodyEl.innerHTML = '<div style="font-size:12px;color:#bbb;">뉴스클리핑 데이터를 불러오지 못했습니다.</div>';
+    return;
+  }
+
+  // 오늘 날짜 → 없으면 가장 최근 날짜
+  const today = new Date().toISOString().slice(0, 10);
+  let filtered = rows.filter(r => (r['날짜'] || r['date'] || '').startsWith(today));
+  if (!filtered.length) {
+    const dates = [...new Set(rows.map(r => r['날짜'] || r['date'] || '').filter(Boolean))].sort();
+    const latest = dates[dates.length - 1];
+    filtered = rows.filter(r => (r['날짜'] || r['date'] || '').startsWith(latest));
+  }
+
+  // 매장 지역 필터 (지역 컬럼이 있으면 적용)
+  const cityFiltered = filtered.filter(r => {
+    const reg = r['지역'] || r['region'] || '';
+    return !reg || reg.includes(city.label) || city.label === '전국';
+  });
+  const items = (cityFiltered.length ? cityFiltered : filtered).slice(0, 3);
+
+  const dateStr  = (items[0]?.['날짜'] || items[0]?.['date'] || '').slice(0, 10);
+  const topicStr = items[0]?.['주제'] || items[0]?.['topic'] || '';
+  const dayStr   = items[0]?.['요일'] || '';
+  topicEl.innerHTML = `
+    <span style="font-size:12px;font-weight:700;color:#c80a1e;">요일별 주요 이슈</span>
+    ${dayStr && topicStr ? `<span style="font-size:12px;color:#555;margin-left:8px;font-weight:400;">${dayStr} - ${topicStr}</span>` : ''}
+  `;
+
+  bodyEl.innerHTML = `
+    <div style="font-size:11px;color:#999;margin-bottom:6px;">${dateStr} · ${city.label} 지역</div>
+    ${items.map((row, i) => {
+      const title = row['제목'] || row['title'] || '';
+      const link  = row['URL']  || row['링크'] || row['url'] || row['link'] || '#';
+      return `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid #F8F8F8;">
+          <span style="font-size:11px;font-weight:700;color:#c80a1e;flex-shrink:0;width:14px;text-align:right;">${i+1}</span>
+          ${link !== '#'
+            ? `<a href="${link}" target="_blank" style="font-size:12px;color:#333;text-decoration:none;line-height:1.45;" onmouseover="this.style.color='#c80a1e'" onmouseout="this.style.color='#333'">${title}</a>`
+            : `<span style="font-size:12px;color:#333;line-height:1.45;">${title}</span>`}
+        </div>`;
+    }).join('')}`;
 }
 
 // ===== HQ DASHBOARD JS =====
@@ -1732,7 +2132,7 @@ function hqAddMemo(){
 populateStores();
 
 Promise.all([
-  fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv`).then(r=>r.text()),
+  fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=440122911`).then(r=>r.text()),
   fetch(`https://docs.google.com/spreadsheets/d/${COMP_ID}/export?format=csv&gid=${COMP_GID}`).then(r=>r.ok?r.text():Promise.resolve('')),
 ]).then(([erpText, compText])=>{
   allRows=parseERP(erpText);
