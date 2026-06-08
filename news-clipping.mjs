@@ -163,8 +163,9 @@ async function postToSlack(payload) {
 }
 
 async function main() {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
+  // GitHub Actions는 UTC 기준 → 서울(UTC+9) 시간으로 변환
+  const seoulTime = new Date(new Date().getTime() + 9 * 60 * 60 * 1000);
+  const dayOfWeek = seoulTime.getUTCDay();
 
   const topic = TOPICS[dayOfWeek];
   if (!topic) {
@@ -172,7 +173,7 @@ async function main() {
     return;
   }
 
-  const dateStr = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 (${DAY_NAMES[dayOfWeek]})`;
+  const dateStr = `${seoulTime.getUTCFullYear()}년 ${seoulTime.getUTCMonth() + 1}월 ${seoulTime.getUTCDate()}일 (${DAY_NAMES[dayOfWeek]})`;
   console.log(`[${dateStr}] ${topic.label}`);
 
   const blocks = [
@@ -189,7 +190,7 @@ async function main() {
   const newsPerSection = topic.sections.length === 1 ? 3 : 1;
   const sheetRows = [];
   const collectedAt = new Date().toISOString();
-  const isoDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const isoDate = `${seoulTime.getUTCFullYear()}-${String(seoulTime.getUTCMonth()+1).padStart(2,'0')}-${String(seoulTime.getUTCDate()).padStart(2,'0')}`;
   const topicLabel = topic.label.replace(/\p{Emoji}/gu, '').trim();
 
   // 슬랙 + 시트
