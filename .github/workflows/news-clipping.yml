@@ -1,9 +1,7 @@
 name: 일룸 뉴스클리핑
 
 on:
-  schedule:
-    - cron: '30 23 * * 0-4'  # 서울 기준 월~금 오전 8:30 (UTC 일~목 23:30)
-  workflow_dispatch:           # 수동 실행 버튼
+  workflow_dispatch:  # cron-job.org에서 매일 08:30 KST 월~금 호출
 
 jobs:
   send-news:
