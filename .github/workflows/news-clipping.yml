@@ -1,7 +1,12 @@
 name: 일룸 뉴스클리핑
 
 on:
-  workflow_dispatch:  # cron-job.org에서 매일 08:30 KST 월~금 호출
+  schedule:
+    - cron: '30 22 * * 0-4'  # 서울 월~금 07:30
+    - cron: '0 23 * * 0-4'   # 서울 월~금 08:00
+    - cron: '30 23 * * 0-4'  # 서울 월~금 08:30
+    - cron: '0 0 * * 1-5'    # 서울 월~금 09:00
+  workflow_dispatch:
 
 jobs:
   send-news:
@@ -9,11 +14,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: 서울 기준 오늘 날짜
+        id: date
+        run: echo "date=$(TZ='Asia/Seoul' date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+
+      - name: 오늘 발송 여부 확인
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .news-sent
+          key: news-sent-${{ steps.date.outputs.date }}
+
+      - name: 이미 발송됨 - 건너뜀
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "오늘 이미 발송됨. 건너뜀."
+
       - uses: actions/setup-node@v4
+        if: steps.cache.outputs.cache-hit != 'true'
         with:
           node-version: '20'
 
       - name: 뉴스클리핑 실행
+        if: steps.cache.outputs.cache-hit != 'true'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: node news-clipping.mjs
+        run: |
+          node news-clipping.mjs
+          mkdir -p .news-sent && echo "${{ steps.date.outputs.date }}" > .news-sent/flag
