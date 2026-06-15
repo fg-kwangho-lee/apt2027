@@ -104,6 +104,19 @@ async function fetchNews(query, count) {
   }
 }
 
+async function fetchUniqueNews(query, count, seenUrls) {
+  const candidates = await fetchNews(query, count * 4);
+  const unique = [];
+  for (const item of candidates) {
+    if (!seenUrls.has(item.link)) {
+      seenUrls.add(item.link);
+      unique.push(item);
+      if (unique.length >= count) break;
+    }
+  }
+  return unique;
+}
+
 async function postJson(url, body, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     if (redirectCount > 5) return reject(new Error('Too many redirects'));
@@ -192,13 +205,14 @@ async function main() {
   const collectedAt = new Date().toISOString();
   const isoDate = `${seoulTime.getUTCFullYear()}-${String(seoulTime.getUTCMonth()+1).padStart(2,'0')}-${String(seoulTime.getUTCDate()).padStart(2,'0')}`;
   const topicLabel = topic.label.replace(/\p{Emoji}/gu, '').trim();
+  const seenUrls = new Set(); // 중복 제거용 전역 URL 추적
 
   // 슬랙 + 시트
   for (const region of SLACK_REGIONS) {
     console.log(`  → ${region.label} 수집 중...`);
     const items = [];
     for (const section of topic.sections) {
-      const news = await fetchNews(`${region.keyword} ${section.query}`, newsPerSection);
+      const news = await fetchUniqueNews(`${region.keyword} ${section.query}`, newsPerSection, seenUrls);
       items.push(...news);
       news.forEach(n => sheetRows.push({ date: isoDate, day: DAY_NAMES[dayOfWeek], topic: topicLabel, region: region.keyword, title: n.title, url: n.link, collected_at: collectedAt }));
     }
@@ -213,7 +227,7 @@ async function main() {
   for (const region of SHEET_REGIONS) {
     console.log(`  → ${region.label} 시트 수집 중...`);
     for (const section of topic.sections) {
-      const news = await fetchNews(`${region.keyword} ${section.query}`, newsPerSection);
+      const news = await fetchUniqueNews(`${region.keyword} ${section.query}`, newsPerSection, seenUrls);
       news.forEach(n => sheetRows.push({ date: isoDate, day: DAY_NAMES[dayOfWeek], topic: topicLabel, region: region.keyword, title: n.title, url: n.link, collected_at: collectedAt }));
     }
   }
