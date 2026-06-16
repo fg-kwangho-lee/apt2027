@@ -6,6 +6,9 @@
 <title>일룸 매출 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/osmtogeojson@3.0.0-beta.5/osmtogeojson.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333; }
@@ -131,83 +134,15 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
 .main-tab-btn:hover { color: #555; }
 .main-tab-btn.active { color: #c80a1e; border-bottom-color: #c80a1e; }
 
-/* ── HQ DASHBOARD ── */
-#hq-dashboard { display: none; height: 100vh; overflow: hidden; }
-#hq-dashboard.show { display: flex; }
-#sidebar {
-  width: 220px; min-width: 220px; background: #1a1a2e;
-  display: flex; flex-direction: column; transition: width 0.2s; overflow: hidden; z-index: 200;
-}
-#sidebar.collapsed { width: 56px; min-width: 56px; }
-.sidebar-logo { padding: 18px 20px 16px; border-bottom: 1px solid #2e2e4a; display: flex; align-items: center; gap: 10px; }
-.sidebar-logo img { height: 22px; flex-shrink: 0; }
-.sidebar-logo span { font-size: 11px; color: #888; white-space: nowrap; }
-.nav-item {
-  display: flex; align-items: center; gap: 12px; padding: 12px 20px;
-  color: #aaa; text-decoration: none; font-size: 13px; cursor: pointer;
-  white-space: nowrap; border-left: 3px solid transparent; transition: all 0.15s;
-}
-.nav-item:hover { background: #2a2a3e; color: #fff; }
-.nav-item.active { background: #2a2a3e; color: #fff; border-left-color: #c80a1e; }
-.nav-icon { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
-.nav-label { white-space: nowrap; }
-#sidebar.collapsed .nav-label, #sidebar.collapsed .sidebar-logo span { display: none; }
-#hq-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #F5F5F7; }
-.hq-header {
-  background: #fff; border-bottom: 2px solid #c80a1e;
-  padding: 0 24px; height: 56px; display: flex; align-items: center;
-  justify-content: space-between; flex-shrink: 0;
-}
-.header-left { display: flex; align-items: center; gap: 12px; }
-.hamburger { background: none; border: none; cursor: pointer; font-size: 20px; color: #555; padding: 4px; }
-.hq-title { font-size: 15px; font-weight: 700; color: #333; }
-.hq-team { font-size: 12px; color: #999; }
-.header-meta { display: flex; align-items: center; gap: 10px; }
-.meta-badge { font-size: 12px; color: #666; background: #F0F0F0; padding: 4px 10px; border-radius: 3px; }
-.meta-badge.red { background: #c80a1e; color: #fff; font-weight: 700; }
-.hq-filter-bar {
-  background: #fff; border-bottom: 1px solid #E8E8E8;
-  padding: 10px 24px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; flex-wrap: wrap;
-}
-.filter-group { display: flex; align-items: center; gap: 6px; }
-.filter-label { font-size: 11px; color: #999; font-weight: 600; }
-.filter-tabs { display: flex; gap: 4px; }
-.ftab {
-  padding: 5px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
-  border: 1px solid #E0E0E0; background: #fff; color: #888;
-  font-family: 'Noto Sans KR', sans-serif; border-radius: 2px;
-}
-.ftab.active { background: #c80a1e; color: #fff; border-color: #c80a1e; }
-.filter-select { padding: 5px 10px; font-size: 12px; font-family: 'Noto Sans KR', sans-serif; border: 1px solid #E0E0E0; color: #555; background: #fff; outline: none; }
-#hq-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
-#hq-content::-webkit-scrollbar { width: 6px; }
-#hq-content::-webkit-scrollbar-thumb { background: #E0E0E0; border-radius: 3px; }
-.hq-section { display: none; }
-.hq-section.active { display: block; }
-.hq-row { display: grid; gap: 12px; margin-bottom: 12px; }
-.hq-row.r1 { grid-template-columns: 1fr; }
-.hq-row.r2 { grid-template-columns: 1fr 1fr; }
-.hq-row.r3 { grid-template-columns: 1fr 1fr 1fr; }
-.hq-kpi-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 16px; }
-.hq-kpi-card { background: #fff; padding: 18px 20px; border-top: 3px solid #E0E0E0; }
-.hq-kpi-card.red { border-top-color: #c80a1e; }
-.hq-kpi-card .kpi-label { margin-bottom: 8px; }
-.hq-kpi-card .kpi-value { font-size: 24px; }
-.hq-kpi-card.red .kpi-value { color: #c80a1e; }
-.hq-card { background: #fff; padding: 20px 22px; }
-.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.data-table th { text-align: left; padding: 8px 10px; font-size: 11px; color: #999; font-weight: 600; border-bottom: 2px solid #E8E8E8; }
-.data-table td { padding: 8px 10px; border-bottom: 1px solid #F4F4F4; }
-.data-table tr:hover td { background: #FAFAFA; }
-.rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700; background: #F0F0F0; color: #666; }
-.rank-badge.top { background: #c80a1e; color: #fff; }
-.anomaly-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
-.anomaly-up { background: #dcfce7; color: #16a34a; }
-.anomaly-down { background: #fee2e2; color: #c80a1e; }
-.anomaly-zero { background: #f3f4f6; color: #555; }
-.view-tabs { display: flex; margin-bottom: 14px; border-bottom: 1px solid #E8E8E8; }
-.vtab { padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; background: none; border: none; color: #999; font-family: 'Noto Sans KR', sans-serif; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-.vtab.active { color: #c80a1e; border-bottom-color: #c80a1e; }
+/* MAP VIEW */
+.map-view-toggle { display: flex; gap: 4px; }
+.mvtab { padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #E0E0E0; background: #fff; color: #888; font-family: 'Noto Sans KR', sans-serif; }
+.mvtab.active { background: #c80a1e; color: #fff; border-color: #c80a1e; }
+#dong-map { width: 100%; height: 420px; }
+.leaflet-popup-content-wrapper { border-radius: 2px !important; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; }
+.leaflet-popup-content { margin: 10px 14px !important; line-height: 1.7 !important; }
+.map-legend { background: white; padding: 8px 12px; font-size: 11px; color: #666; border: 1px solid #E0E0E0; line-height: 1.8; }
+
 </style>
 </head>
 <body>
@@ -221,38 +156,10 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
   <div class="login-box">
     <img src="iloom-logo.png" alt="iloom" style="height:36px;margin-bottom:16px;">
 
-    <!-- 계정 유형 탭 -->
-    <div style="display:flex;border-bottom:2px solid #E0E0E0;margin-bottom:20px;">
-      <button id="login-tab-dealer" onclick="setLoginMode('dealer')"
-        style="flex:1;padding:10px 0;font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;
-               background:none;border:none;border-bottom:3px solid #c80a1e;margin-bottom:-2px;
-               color:#c80a1e;cursor:pointer;">대리점</button>
-      <button id="login-tab-hq" onclick="setLoginMode('hq')"
-        style="flex:1;padding:10px 0;font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif;
-               background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
-               color:#999;cursor:pointer;">본사</button>
-    </div>
-
     <!-- 대리점 폼 -->
-    <div id="login-form-dealer">
-      <select id="store-select"><option value="">매장을 선택하세요</option></select>
-      <input type="password" id="store-pw" placeholder="비밀번호" onkeydown="checkCapsLock(event);if(event.key==='Enter')doLogin()" onkeyup="checkCapsLock(event)" style="display:none;">
-      <button class="login-btn" onclick="doLogin()">로그인</button>
-    </div>
-
-    <!-- 본사 폼 -->
-    <div id="login-form-hq" style="display:none;">
-      <input type="text" id="hq-id" placeholder="아이디"
-        style="width:100%;padding:12px 14px;border:1px solid #E0E0E0;font-family:'Noto Sans KR',sans-serif;
-               font-size:14px;color:#333;background:#fff;margin-bottom:10px;outline:none;"
-        onkeydown="if(event.key==='Enter')doHqLogin()">
-      <input type="password" id="hq-pw" placeholder="비밀번호"
-        style="width:100%;padding:12px 14px;border:1px solid #E0E0E0;font-family:'Noto Sans KR',sans-serif;
-               font-size:14px;color:#333;background:#fff;margin-bottom:10px;outline:none;"
-        onkeydown="checkCapsLock(event);if(event.key==='Enter')doHqLogin()"
-        onkeyup="checkCapsLock(event)">
-      <button class="login-btn" onclick="doHqLogin()">로그인</button>
-    </div>
+    <select id="store-select"><option value="">매장을 선택하세요</option></select>
+    <input type="password" id="store-pw" placeholder="비밀번호" onkeydown="checkCapsLock(event);if(event.key==='Enter')doLogin()" onkeyup="checkCapsLock(event)" style="display:none;">
+    <button class="login-btn" onclick="doLogin()">로그인</button>
 
     <div class="login-error" id="login-error"></div>
     <div class="login-hint" id="login-hint"></div>
@@ -344,13 +251,20 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
       </div>
       <div class="chart-row row-1">
         <div class="card">
-          <div class="card-title">지역별 매출 <span style="font-size:12px;font-weight:400;color:#999;">('동' 기준)</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+            <div class="card-title">지역별 매출 <span style="font-size:12px;font-weight:400;color:#999;">('동' 기준)</span></div>
+            <div class="map-view-toggle">
+              <button class="mvtab active" id="mvtab-map" onclick="setDongViewMode('map')">지도</button>
+              <button class="mvtab" id="mvtab-chart" onclick="setDongViewMode('chart')">차트</button>
+            </div>
+          </div>
           <div class="card-sub" id="dong-breadcrumb">시/도 선택 → 구/시군 선택 → 동 표시</div>
           <div id="dong-sido-filter" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-bottom:8px;padding-bottom:4px;scrollbar-width:none;"></div>
           <div style="border-top:1px solid #F0F0F0;margin-bottom:8px;"></div>
           <div id="dong-sigungu-filter" style="display:flex;flex-wrap:nowrap;overflow-x:auto;gap:4px;margin-bottom:14px;padding-bottom:4px;scrollbar-width:none;"></div>
           <div id="dong-total" style="margin-bottom:12px;"></div>
-          <div id="dong-chart-wrap" style="height:260px;"><canvas id="chart-dong"></canvas></div>
+          <div id="dong-map-wrap" style="min-height:420px;"></div>
+          <div id="dong-chart-wrap" style="height:260px;display:none;"><canvas id="chart-dong"></canvas></div>
         </div>
       </div>
     </div>
@@ -439,164 +353,6 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════
-     본사 대시보드
-══════════════════════════════════════════ -->
-<div id="hq-dashboard">
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <div class="sidebar-logo">
-      <span style="font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;color:#c80a1e;letter-spacing:-0.5px;flex-shrink:0;">iloom</span>
-      <span>리테일사업팀</span>
-    </div>
-    <nav style="flex:1;padding-top:8px;">
-      <a class="nav-item active" onclick="hqShowSection('ranking',this)"><span class="nav-icon">🏆</span><span class="nav-label">종합 랭킹</span></a>
-      <a class="nav-item" onclick="hqShowSection('channel',this)"><span class="nav-icon">🔄</span><span class="nav-label">채널 비교</span></a>
-      <a class="nav-item" onclick="hqShowSection('weekly',this)"><span class="nav-icon">📈</span><span class="nav-label">주간 수주 추이</span></a>
-      <a class="nav-item" onclick="hqShowSection('anomaly',this)"><span class="nav-icon">🔎</span><span class="nav-label">이상 탐지 & 메모</span></a>
-      <a class="nav-item" onclick="hqShowSection('forecast',this)"><span class="nav-icon">🔮</span><span class="nav-label">월말 예측</span></a>
-      <a class="nav-item" onclick="hqShowSection('series',this)"><span class="nav-icon">📊</span><span class="nav-label">시리즈 분석</span></a>
-      <a class="nav-item" onclick="hqShowSection('monthly',this)"><span class="nav-icon">📋</span><span class="nav-label">월별 보고서</span></a>
-      <a class="nav-item" onclick="hqShowSection('daily',this)"><span class="nav-icon">📅</span><span class="nav-label">일별 수주</span></a>
-    </nav>
-    <a class="nav-item" onclick="doLogout()" style="border-top:1px solid #2e2e4a;flex-shrink:0;">
-      <span class="nav-icon">↩</span><span class="nav-label">로그아웃</span>
-    </a>
-  </div>
-
-  <!-- MAIN -->
-  <div id="hq-main">
-    <header class="hq-header">
-      <div class="header-left">
-        <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('collapsed')">☰</button>
-        <div>
-          <div class="hq-title">일룸 오프라인 수주/매출 대시보드</div>
-          <div class="hq-team">리테일사업팀</div>
-        </div>
-      </div>
-      <div class="header-meta">
-        <span class="meta-badge">전국 86개점 (직영+리테일)</span>
-        <span class="meta-badge" id="hq-h-period">데이터 로드 중...</span>
-        <span class="meta-badge red" id="hq-h-update">데이터 연동 대기중</span>
-      </div>
-    </header>
-
-    <div class="hq-filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">채널</span>
-        <div class="filter-tabs">
-          <button class="ftab active" onclick="hqSetFilter('channel','all',this)">전체</button>
-          <button class="ftab" onclick="hqSetFilter('channel','retail',this)">🏬 리테일</button>
-          <button class="ftab" onclick="hqSetFilter('channel','direct',this)">🏢 직영</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">기준</span>
-        <div class="filter-tabs">
-          <button class="ftab active" onclick="hqSetFilter('basis','order',this)">수주</button>
-          <button class="ftab" onclick="hqSetFilter('basis','sales',this)">매출</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">기간</span>
-        <div class="filter-tabs">
-          <button class="ftab active" onclick="hqSetFilter('period','ytd',this)">YTD 전체</button>
-          <button class="ftab" onclick="hqSetFilter('period','month',this)">당월</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">사업소</span>
-        <select class="filter-select" onchange="hqApplyFilters()">
-          <option value="">전체</option>
-          <option>서울사업소</option><option>경기사업소</option><option>대전사업소</option>
-          <option>광주사업소</option><option>대구사업소</option><option>부산사업소</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="hq-content">
-      <!-- 종합 랭킹 -->
-      <div id="hq-section-ranking" class="hq-section active">
-        <div class="hq-kpi-grid">
-          <div class="hq-kpi-card red"><div class="kpi-label">YTD 전체 수주</div><div class="kpi-value" id="hq-kpi-total">-<span class="kpi-unit">억</span></div><div class="kpi-sub" id="hq-kpi-total-sub"></div></div>
-          <div class="hq-kpi-card"><div class="kpi-label">참여 점포</div><div class="kpi-value" id="hq-kpi-stores">86<span class="kpi-unit">개점</span></div><div class="kpi-sub">직영 + 리테일</div></div>
-          <div class="hq-kpi-card"><div class="kpi-label">당월 누계</div><div class="kpi-value" id="hq-kpi-monthly">-<span class="kpi-unit">억</span></div><div class="kpi-sub" id="hq-kpi-monthly-sub"></div></div>
-          <div class="hq-kpi-card"><div class="kpi-label">전년 대비 (YoY)</div><div class="kpi-value" id="hq-kpi-yoy">-<span class="kpi-unit">%</span></div></div>
-        </div>
-        <div class="hq-row r2">
-          <div class="hq-card"><div class="card-title">사업소별 수주</div><div class="card-sub">YTD 누계 (단위: 억원)</div><div style="height:260px;"><canvas id="chart-office-rank"></canvas></div></div>
-          <div class="hq-card"><div class="card-title">채널 믹스</div><div class="card-sub">YTD 채널별 비중</div><div style="height:260px;"><canvas id="chart-channel-mix"></canvas></div></div>
-        </div>
-        <div class="hq-row r1">
-          <div class="hq-card"><div class="card-title">매장별 순위</div><div class="card-sub">YTD 수주 기준 전체 랭킹</div><div id="rank-table-wrap" style="height:320px;"><canvas id="chart-store-rank"></canvas></div></div>
-        </div>
-      </div>
-      <!-- 채널 비교 -->
-      <div id="hq-section-channel" class="hq-section">
-        <div class="hq-row r2">
-          <div class="hq-card"><div class="card-title">채널별 수주 비교</div><div class="card-sub">직영 vs 리테일 월별 비교</div><div style="height:280px;"><canvas id="chart-channel-compare"></canvas></div></div>
-          <div class="hq-card"><div class="card-title">전년 대비 성장률 (YoY)</div><div class="card-sub">채널별 YoY 증감률</div><div style="height:280px;"><canvas id="chart-yoy"></canvas></div></div>
-        </div>
-      </div>
-      <!-- 주간 수주 추이 -->
-      <div id="hq-section-weekly" class="hq-section">
-        <div class="hq-card" style="margin-bottom:12px;"><div class="card-title">채널별 주간 수주 추이</div><div class="card-sub">단위: 백만원</div><div style="height:260px;"><canvas id="chart-weekly-channel"></canvas></div></div>
-        <div class="hq-card" style="margin-bottom:12px;">
-          <div class="card-title">사업소별 주간 수주 추이</div>
-          <div class="view-tabs" style="margin-top:8px;">
-            <button class="vtab active" onclick="hqSetWeeklyView('index',this)">📏 지수화 (1주=100)</button>
-            <button class="vtab" onclick="hqSetWeeklyView('abs',this)">💰 절대값 (백만)</button>
-            <button class="vtab" onclick="hqSetWeeklyView('wow',this)">📈 전주 대비 (%)</button>
-          </div>
-          <div style="height:260px;"><canvas id="chart-weekly-office"></canvas></div>
-        </div>
-      </div>
-      <!-- 이상 탐지 -->
-      <div id="hq-section-anomaly" class="hq-section">
-        <div class="hq-card" style="margin-bottom:12px;">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
-            <div class="filter-group"><span class="filter-label">감지 기준</span><div class="filter-tabs"><button class="ftab active" onclick="hqAnomalyFilter('threshold','20',this)">±20%</button><button class="ftab" onclick="hqAnomalyFilter('threshold','30',this)">±30%</button><button class="ftab" onclick="hqAnomalyFilter('threshold','50',this)">±50%</button></div></div>
-            <div class="filter-group"><span class="filter-label">유형</span><div class="filter-tabs"><button class="ftab active" onclick="hqAnomalyFilter('type','all',this)">전체</button><button class="ftab" onclick="hqAnomalyFilter('type','up',this)">급등</button><button class="ftab" onclick="hqAnomalyFilter('type','down',this)">급락</button><button class="ftab" onclick="hqAnomalyFilter('type','zero',this)">0원 전환</button></div></div>
-          </div>
-          <div class="card-title">이상 탐지 결과</div><div class="card-sub">전주 대비 급등/급락 매장</div>
-          <div id="hq-anomaly-table"><div class="no-data">데이터 연동 후 표시됩니다.</div></div>
-        </div>
-        <div class="hq-card">
-          <div class="card-title">📝 매장 메모</div><div class="card-sub">이상 원인 기록</div>
-          <div id="hq-memo-list" style="margin-bottom:12px;min-height:60px;"><div class="no-data">등록된 메모가 없습니다.</div></div>
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="hq-memo-text" placeholder="매장명 및 메모 내용 입력" style="flex:1;padding:6px 10px;border:1px solid #E0E0E0;font-family:'Noto Sans KR',sans-serif;font-size:13px;outline:none;">
-            <button onclick="hqAddMemo()" style="padding:6px 16px;background:#c80a1e;color:#fff;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;">추가</button>
-          </div>
-        </div>
-      </div>
-      <!-- 월말 예측 -->
-      <div id="hq-section-forecast" class="hq-section">
-        <div class="hq-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
-          <div class="hq-kpi-card red"><div class="kpi-label">당월 현재 수주</div><div class="kpi-value" id="hq-fc-current">42.3<span class="kpi-unit">억</span></div></div>
-          <div class="hq-kpi-card"><div class="kpi-label">🔀 블렌드 예측</div><div class="kpi-value" id="hq-fc-blend">68.7<span class="kpi-unit">억</span></div></div>
-          <div class="hq-kpi-card"><div class="kpi-label">목표 달성률 (예측)</div><div class="kpi-value" id="hq-fc-rate" style="color:#c80a1e;">87.2<span class="kpi-unit">%</span></div></div>
-        </div>
-        <div class="hq-card"><div class="card-title">당월 수주 추이 & 예측</div><div class="card-sub">실적(실선) + 예측(점선)</div><div style="height:280px;"><canvas id="chart-forecast"></canvas></div></div>
-      </div>
-      <!-- 시리즈 분석 -->
-      <div id="hq-section-series" class="hq-section">
-        <div class="hq-row r2">
-          <div class="hq-card"><div class="card-title">시리즈 TOP 10</div><div class="card-sub">YTD 수주금액 기준</div><div id="hq-series-table"><div class="no-data">데이터 연동 후 표시됩니다.</div></div></div>
-          <div class="hq-card"><div class="card-title">주차별 시리즈 추이 (TOP 5)</div><div class="card-sub">주간 수주 추이</div><div style="height:300px;"><canvas id="chart-series-trend"></canvas></div></div>
-        </div>
-      </div>
-      <!-- 월별 보고서 -->
-      <div id="hq-section-monthly" class="hq-section">
-        <div class="hq-card"><div class="card-title">월별 수주/매출 현황</div><div class="card-sub">사업소별 월별 집계</div><div style="height:280px;"><canvas id="chart-monthly-report"></canvas></div></div>
-      </div>
-      <!-- 일별 수주 -->
-      <div id="hq-section-daily" class="hq-section">
-        <div class="hq-card" style="margin-bottom:12px;"><div class="card-title">일별 수주 추이 (전국 합계)</div><div class="card-sub">단위: 백만원 · 회색=주말/공휴일</div><div style="height:240px;"><canvas id="chart-daily"></canvas></div></div>
-      </div>
-    </div><!-- /hq-content -->
-  </div><!-- /hq-main -->
-</div><!-- /hq-dashboard -->
 
 <script>
 // ============================================================
@@ -795,15 +551,51 @@ function parseERP(text) {
 // ===== PARSE COMPETITOR =====
 function parseCompetitor(text) {
   const lines = text.trim().split('\n');
-  // col offsets: iloom monthStart=7, 한샘 name=22 months=25, 리바트 name=40 months=43, 까사미아 name=58 months=61, 에몬스 name=76 months=79
   const BRANDS = { '한샘':{n:22,m:25}, '리바트':{n:40,m:43}, '까사미아':{n:58,m:61}, '에몬스':{n:76,m:79} };
   const result={};
+  let lastIloom = null;
+  let lastHangjeong = null;
+
   for(let i=1;i<lines.length;i++){
     const c=parseCSVLine(lines[i]);
     if(c.length<5) continue;
-    const iloom=(c[3]||'').replace(/"/g,'').trim();
+    const iloom    = (c[3]||'').replace(/"/g,'').trim();
+    const hangjeong = (c[2]||'').replace(/"/g,'').trim();
+
+    // iloom 없고 같은 행정구역 → 이전 엔트리에 브랜드 데이터 합산
+    if(!iloom && lastIloom && hangjeong && hangjeong === lastHangjeong) {
+      const prevEntry = result[lastIloom][result[lastIloom].length - 1];
+      for(const [brand,cfg] of Object.entries(BRANDS)){
+        const name=(c[cfg.n]||'').replace(/"/g,'').trim();
+        const months=[];
+        for(let m=0;m<12;m++) months.push(parseInt((c[cfg.m+m]||'').replace(/[",\s]/g,''))||0);
+        if(name||months.some(v=>v>0)){
+          if(!prevEntry.brands[brand]){
+            prevEntry.brands[brand]={name,months};
+          } else {
+            const newHasData = months.some(v=>v>0);
+            const prevHasData = prevEntry.brands[brand].months.some(v=>v>0);
+            if(newHasData && name){
+              if(!prevHasData){
+                // 이전 행은 데이터 없음 → 데이터 있는 행의 이름으로 교체
+                prevEntry.brands[brand].name = name;
+              } else if(prevEntry.brands[brand].name && !prevEntry.brands[brand].name.includes(name)){
+                // 둘 다 데이터 있음 → 이름 모두 표기
+                prevEntry.brands[brand].name += ', ' + name;
+              }
+            }
+            months.forEach((v,mi)=>{ prevEntry.brands[brand].months[mi]+=v; });
+          }
+        }
+      }
+      continue;
+    }
+
     if(!iloom) continue;
-    const entry={ 상권:(c[1]||'').replace(/"/g,'').trim(), 행정구역:(c[2]||'').replace(/"/g,'').trim(), iloomMonths:[], brands:{} };
+    lastIloom    = iloom;
+    lastHangjeong = hangjeong;
+
+    const entry={ 상권:(c[1]||'').replace(/"/g,'').trim(), 행정구역:hangjeong, iloomMonths:[], brands:{} };
     for(let m=0;m<12;m++){
       entry.iloomMonths.push(parseInt((c[7+m]||'').replace(/[",\s]/g,''))||0);
     }
@@ -836,42 +628,6 @@ function checkCapsLock(e) {
 function showLoginFail(msg) {
   document.getElementById('login-error').textContent = msg;
   document.getElementById('login-tips').style.display = 'block';
-}
-
-// ===== HQ ACCOUNTS =====
-const HQ_ACCOUNTS = {
-  'iloom_hq': 'hq2024',  // 아이디: 비밀번호 형태로 추가 가능
-};
-const HQ_URL = 'hq-dashboard.html';
-
-// ===== LOGIN MODE =====
-function setLoginMode(mode) {
-  const isHq = mode === 'hq';
-  document.getElementById('login-form-dealer').style.display = isHq ? 'none' : '';
-  document.getElementById('login-form-hq').style.display   = isHq ? '' : 'none';
-  document.getElementById('login-error').textContent = '';
-
-  const tabDealer = document.getElementById('login-tab-dealer');
-  const tabHq     = document.getElementById('login-tab-hq');
-  tabDealer.style.borderBottomColor = isHq ? 'transparent' : '#c80a1e';
-  tabDealer.style.color = isHq ? '#999' : '#c80a1e';
-  tabHq.style.borderBottomColor = isHq ? '#c80a1e' : 'transparent';
-  tabHq.style.color = isHq ? '#c80a1e' : '#999';
-}
-
-function doHqLogin() {
-  const id  = document.getElementById('hq-id').value.trim();
-  const pw  = document.getElementById('hq-pw').value;
-  const err = document.getElementById('login-error');
-  if (!id || !pw) { err.textContent = '아이디와 비밀번호를 입력하세요.'; return; }
-  if (!HQ_ACCOUNTS[id] || HQ_ACCOUNTS[id] !== pw) {
-    showLoginFail('아이디 또는 비밀번호가 올바르지 않습니다.');
-    return;
-  }
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('hq-dashboard').classList.add('show');
-  document.getElementById('hq-h-period').textContent = '2026-01 ~ 2026-04';
-  hqRenderRanking();
 }
 
 // ===== LOGIN =====
@@ -910,8 +666,9 @@ function doLogin(){
 
 function doLogout(){
   currentStore=''; dongTree={}; currentDongSido=''; currentDongSigungu='';
+  storeLatLngCache={};
+  if(dongMapInst){dongMapInst.remove();dongMapInst=null;}
   document.getElementById('dashboard').style.display='none';
-  document.getElementById('hq-dashboard').classList.remove('show');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('store-pw').value='';
   Object.keys(charts).forEach(id=>destroyChart(id));
@@ -1127,7 +884,7 @@ function renderDong(sales) {
 
   buildSidoFilter(sidoSorted);
   buildSigunguFilter(sigunguSorted);
-  renderDongChart();
+  if (dongViewMode === 'map') renderDongMapView(); else renderDongChart();
 }
 
 function sidoTotal(sido) {
@@ -1158,13 +915,13 @@ function selectDongSido(sido) {
   currentDongSigungu = list[0] || '';
   buildSidoFilter(Object.keys(dongTree).map(s=>[s,sidoTotal(s)]).sort((a,b)=>b[1]-a[1]).map(([s])=>s));
   buildSigunguFilter(list);
-  renderDongChart();
+  if (dongViewMode === 'map') renderDongMapView(); else renderDongChart();
 }
 
 function selectDongSigungu(sigungu) {
   currentDongSigungu = sigungu;
   buildSigunguFilter(sigunguList(currentDongSido));
-  renderDongChart();
+  if (dongViewMode === 'map') renderDongMapView(); else renderDongChart();
 }
 
 function renderDongChart() {
@@ -1221,6 +978,269 @@ function renderDongChart() {
   });
 }
 
+// ===== DONG MAP =====
+const STORE_LOC_ID  = '1lcSLFkm6CNU0JeGle4xCR0lU9L7uPCrcR6lenD4OH80';
+const STORE_LOC_GID = '1645827931';
+let storeLocData     = null;
+let storeLatLngCache = {};  // 매장별 캐시 (storeName → [lat,lng] | null)
+let dongMapInst   = null;
+let dongGeoLayer  = null;
+let dongGeoCache  = {};
+let dongViewMode  = 'map';
+
+function setDongViewMode(mode) {
+  dongViewMode = mode;
+  document.getElementById('mvtab-map').classList.toggle('active', mode === 'map');
+  document.getElementById('mvtab-chart').classList.toggle('active', mode === 'chart');
+  document.getElementById('dong-map-wrap').style.display  = mode === 'map'   ? '' : 'none';
+  document.getElementById('dong-chart-wrap').style.display = mode === 'chart' ? '' : 'none';
+  if (mode === 'map') renderDongMapView(); else renderDongChart();
+}
+
+async function loadStoreLocations() {
+  if (storeLocData) return storeLocData;
+  try {
+    const res  = await fetch(`https://docs.google.com/spreadsheets/d/${STORE_LOC_ID}/export?format=csv&gid=${STORE_LOC_GID}`);
+    const text = await res.text();
+    const result = {};
+    text.trim().split('\n').forEach(line => {
+      const c = parseCSVLine(line);
+      const addEntry = (ni, ai) => {
+        const name = (c[ni]||'').replace(/"/g,'').trim();
+        const addr = (c[ai]||'').replace(/"/g,'').trim();
+        if (name && addr && /[가-힣]{2}/.test(name) && /(시|군|구)/.test(addr)) result[name] = addr;
+      };
+      if (c.length >= 10) addEntry(4, 9);
+      if (c.length >= 23) addEntry(17, 22);
+    });
+    storeLocData = result;
+    return result;
+  } catch(e) { return {}; }
+}
+
+function cleanStoreAddress(addr) {
+  return addr
+    .split(',')[0]
+    .replace(/\([^)]*\)/g, '')                           // (정자동) 같은 괄호 제거
+    .replace(/\s+(지하|지상|B)?\d+[층호F]\s*.*$/i, '')  // 지하1층, 5층, B1층 제거
+    .replace(/\s+[A-Z]\d+\s*.*$/i, '')                   // B2, A동 등 제거
+    .replace(/\s+(스타필드|아이파크|메종|NC|신세계|현대|롯데|홈플러스|이마트|코스트코)[^\s]*/g, '') // 브랜드 건물명 제거
+    .replace(/\s+[가-힣]{2,}(백화점|아울렛|쇼핑|마트|빌딩|타워|몰|점|센터|관|아파트|오피스텔|가구단지)\s*.*$/, '') // 건물명 제거
+    .replace(/\s+[가-힣]{2,}(빌딩|타워|몰|점|센터|관|아파트|오피스텔)\s*.*$/, '')
+    .trim();
+}
+
+async function getStoreLatLng(storeName) {
+  if (storeName in storeLatLngCache) return storeLatLngCache[storeName];
+  const locs = await loadStoreLocations();
+  const addr = locs[storeName];
+  if (!addr) { storeLatLngCache[storeName] = null; return null; }
+
+  const tryGeocode = async (q) => {
+    if (!q || q.length < 4) return null;
+    const res  = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&countrycodes=KR&limit=1`, { headers: { 'Accept-Language': 'ko' } });
+    const data = await res.json();
+    return data.length > 0 ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+  };
+
+  try {
+    // 1차: 정제된 전체 주소
+    let result = await tryGeocode(cleanStoreAddress(addr));
+    // 2차: 도로명 주소 앞 5토큰 (시도+시군구+도로명+번지+번지2)
+    if (!result) {
+      const cleaned = cleanStoreAddress(addr);
+      result = await tryGeocode(cleaned.split(/\s+/).slice(0, 5).join(' '));
+    }
+    // 3차: 원본 주소 앞 4토큰
+    if (!result) {
+      result = await tryGeocode(addr.trim().split(/\s+/).slice(0, 4).join(' '));
+    }
+    // 4차: 시도+시군구 (앞 2토큰)
+    if (!result) {
+      result = await tryGeocode(addr.trim().split(/\s+/).slice(0, 2).join(' '));
+    }
+    storeLatLngCache[storeName] = result || null;
+    return storeLatLngCache[storeName];
+  } catch(e) {}
+  storeLatLngCache[storeName] = null;
+  return null;
+}
+
+async function fetchDongGeoJSON(sigungu) {
+  if (dongGeoCache[sigungu]) return dongGeoCache[sigungu];
+  const query = `[out:json][timeout:30];area["name"="${sigungu}"]->.a;(relation["admin_level"~"^[789]$"]["name"](area.a););out geom;`;
+  const res   = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+  const data  = await res.json();
+  const geojson = osmtogeojson(data);
+  dongGeoCache[sigungu] = geojson;
+  return geojson;
+}
+
+async function renderDongMapView() {
+  const wrap = document.getElementById('dong-map-wrap');
+  if (!wrap || dongViewMode !== 'map') return;
+  if (!currentDongSigungu) {
+    wrap.innerHTML = '<div style="height:420px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">시/도 → 시/군/구를 선택하세요</div>';
+    return;
+  }
+
+  wrap.innerHTML = `<div style="height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#999;font-size:13px;gap:10px;"><div class="spinner"></div><div>${currentDongSigungu} 지도 불러오는 중...</div><div style="font-size:11px;color:#bbb;">행정동 경계 데이터 로드 (~5초)</div></div>`;
+
+  let geojson, storeLL;
+  try {
+    [geojson, storeLL] = await Promise.all([fetchDongGeoJSON(currentDongSigungu), getStoreLatLng(currentStore)]);
+  } catch(e) {
+    wrap.innerHTML = `<div style="height:420px;display:flex;align-items:center;justify-content:center;color:#c80a1e;font-size:13px;">지도 로드 실패 (${e.message})</div>`;
+    return;
+  }
+
+  wrap.innerHTML = '<div id="dong-map"></div>';
+  if (dongMapInst) { dongMapInst.remove(); dongMapInst = null; }
+
+  const dongSalesMap = dongTree[currentDongSido]?.[currentDongSigungu] || {};
+  const totalAmt = Object.values(dongSalesMap).reduce((a, b) => a + b, 0);
+  const maxAmt   = Math.max(...Object.values(dongSalesMap), 1);
+  const initCenter = storeLL || [37.5665, 126.978];
+
+  dongMapInst = L.map('dong-map', { preferCanvas: true }).setView(initCenter, 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(dongMapInst);
+  dongMapInst.getPanes().tilePane.style.filter = 'saturate(35%) brightness(108%)';
+
+  // 매장 마커
+  if (storeLL) {
+    const icon = L.divIcon({
+      html: `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <div style="background:#c80a1e;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.35);border-radius:2px;display:flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7v2h20V7L12 2zm-9 9v9h4v-5h2v5h2v-5h2v5h2v-5h2v5h4v-9H3zm16 7h-2v-5h2v5zm-4 0h-2v-5h2v5zm-4 0H9v-5h2v5zm-4 0H5v-5h2v5z"/></svg>
+          ${currentStore}
+        </div>
+        <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #c80a1e;"></div>
+      </div>`,
+      className: '', iconAnchor: [50, 46]
+    });
+    L.marker(storeLL, { icon }).addTo(dongMapInst);
+  }
+
+  // 동 경계 choropleth
+  if (geojson && geojson.features.length > 0) {
+    const getAmt = (feature) => {
+      const osmName  = (feature.properties.name || '').trim();
+      const normName = osmName.replace(/\d+([동읍면리])$/, '$1');
+      return dongSalesMap[osmName] || dongSalesMap[normName] || 0;
+    };
+
+    dongGeoLayer = L.geoJSON(geojson, {
+      filter: feature => feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon',
+      style: feature => {
+        const amt = getAmt(feature);
+        if (amt <= 0) return { fillColor: '#d1d5db', fillOpacity: 0.25, color: '#aaa', weight: 0.8, opacity: 0.5 };
+        const ratio = amt / maxAmt;
+        // 연분홍(낮음) → 진빨강(높음): 5단계 색상
+        const colors = ['#fecdd3','#fda4af','#f43f5e','#e11d48','#9f1239'];
+        const idx = ratio < 0.2 ? 0 : ratio < 0.4 ? 1 : ratio < 0.6 ? 2 : ratio < 0.8 ? 3 : 4;
+        return { fillColor: colors[idx], fillOpacity: 0.55 + ratio * 0.35, color: '#9f1239', weight: 1, opacity: 0.7 };
+      },
+      onEachFeature: (feature, layer) => {
+        const osmName  = (feature.properties.name || '').trim();
+        const normName = osmName.replace(/\d+([동읍면리])$/, '$1');
+        const amt = getAmt(feature);
+        const pct = totalAmt > 0 ? (amt / totalAmt * 100).toFixed(1) : '0.0';
+
+        layer.on('mouseover', function(e) {
+          this.setStyle({ weight: 2.5, color: '#c80a1e', fillOpacity: 0.9 });
+          L.popup({ closeButton: false, autoPan: false, offset: [0, -4] })
+            .setLatLng(e.latlng)
+            .setContent(`<div style="font-family:'Noto Sans KR',sans-serif;font-size:12px;line-height:1.7;"><b>${osmName}</b><br>${amt > 0 ? mapFmt(amt) : '<span style="color:#bbb">매출 없음</span>'}<br><b style="color:#c80a1e;">${pct}%</b> (${currentDongSigungu} 내)</div>`)
+            .openOn(dongMapInst);
+        });
+
+        layer.on('mouseout', function() {
+          dongGeoLayer.resetStyle(this);
+          dongMapInst.closePopup();
+        });
+
+        layer.on('click', function(e) {
+          const centroid = getDongCentroid(feature.geometry);
+          const dist = (storeLL && centroid) ? haversineKm(storeLL[0], storeLL[1], centroid[0], centroid[1]) : null;
+          const topItems = getTopItemsForDong(osmName, normName);
+
+          let html = `<div style="font-family:'Noto Sans KR',sans-serif;font-size:12px;line-height:1.8;min-width:170px;">`;
+          html += `<div style="font-weight:700;font-size:14px;color:#c80a1e;border-bottom:1px solid #F0F0F0;padding-bottom:6px;margin-bottom:6px;">${osmName}</div>`;
+          html += `<div>매출: <b>${amt > 0 ? mapFmt(amt) : '없음'}</b></div>`;
+          html += `<div>${currentDongSigungu} 내 비중: <b>${pct}%</b></div>`;
+          if (dist !== null) html += `<div>매장까지: <b>${dist.toFixed(1)}km</b></div>`;
+          if (topItems.length > 0) {
+            html += `<div style="margin-top:8px;font-weight:700;border-top:1px solid #F0F0F0;padding-top:6px;">TOP 판매 품목</div>`;
+            topItems.slice(0, 5).forEach((it, i) => {
+              html += `<div style="display:flex;justify-content:space-between;gap:16px;"><span>${i+1}. ${it.setCode}</span><span style="color:#999">${it.cnt}건</span></div>`;
+            });
+          } else {
+            html += `<div style="color:#bbb;margin-top:4px;">품목 데이터 없음</div>`;
+          }
+          html += '</div>';
+          L.popup({ maxWidth: 240 }).setLatLng(e.latlng).setContent(html).openOn(dongMapInst);
+        });
+      }
+    }).addTo(dongMapInst);
+
+    try { dongMapInst.fitBounds(dongGeoLayer.getBounds(), { padding: [16, 16] }); } catch(e) {}
+
+    // 범례
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create('div', 'map-legend');
+      const steps = [['#9f1239','매우 높음'],['#e11d48','높음'],['#f43f5e','중간'],['#fda4af','낮음'],['#d1d5db','없음']];
+      div.innerHTML = `<div style="font-weight:700;margin-bottom:5px;font-size:11px;">매출 강도</div>` +
+        steps.map(([c, l]) => `<div style="display:flex;align-items:center;gap:6px;"><div style="width:14px;height:10px;background:${c};"></div><span>${l}</span></div>`).join('');
+      return div;
+    };
+    legend.addTo(dongMapInst);
+  } else {
+    wrap.innerHTML = `<div style="height:420px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">${currentDongSigungu} 경계 데이터를 찾을 수 없습니다</div>`;
+  }
+}
+
+function getTopItemsForDong(dongName, normName) {
+  const dongRows = allRows.filter(r => {
+    if (r.store !== currentStore) return false;
+    const d = parseDong(r.address);
+    return d === dongName || d === normName;
+  });
+  const freq = {};
+  dongRows.forEach(r => {
+    const key = r.setCode || r.itemCode;
+    if (!key) return;
+    if (!freq[key]) freq[key] = { cnt: 0, amt: 0 };
+    freq[key].cnt++; freq[key].amt += r.amt;
+  });
+  return Object.entries(freq).sort((a, b) => b[1].cnt - a[1].cnt).map(([setCode, v]) => ({ setCode, ...v }));
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function getDongCentroid(geometry) {
+  let coords = [];
+  if (geometry.type === 'Polygon') coords = geometry.coordinates[0];
+  else if (geometry.type === 'MultiPolygon') coords = geometry.coordinates.flat(1)[0] || [];
+  if (!coords.length) return null;
+  return [coords.reduce((s, c) => s + c[1], 0) / coords.length, coords.reduce((s, c) => s + c[0], 0) / coords.length];
+}
+
+function mapFmt(n) {
+  if (n >= 100000000) return (n/100000000).toFixed(1) + '억원';
+  if (n >= 10000000)  return Math.round(n/10000000) + '천만원';
+  if (n >= 10000)     return Math.round(n/10000) + '만원';
+  return n.toLocaleString() + '원';
+}
+
 function renderComp(storeName, months){
   const content=document.getElementById('comp-content');
   const entries=compData[storeName];
@@ -1229,21 +1249,26 @@ function renderComp(storeName, months){
     return;
   }
   const entry=entries[0];
-  document.getElementById('comp-sub').textContent=`${entry.행정구역} (${entry.상권}) 기준`;
+  const hangjeong = entry.행정구역 || entry.상권 || '';
+  document.getElementById('comp-sub').textContent=`${hangjeong} 기준`;
 
   // month indices (0=Jan)
   const mIdx=months.map(m=>+m.split('-')[1]-1);
   const labels=months.map(m=>+m.split('-')[1]+'월');
 
-  // iloom: use ERP data for own store
   const erpByMonth=months.map(m=>allRows.filter(r=>r.store===storeName&&r.type!=='(판촉물택배)'&&r.amt>0&&r.date.startsWith(m)).reduce((s,r)=>s+r.amt,0));
   const datasets=[{ label:'일룸', data:erpByMonth, backgroundColor:RED, borderRadius:3 }];
 
   for(const [brand,cfg] of Object.entries(COMP_COLORS)){
-    if(!entry.brands[brand]) continue;
-    const bdata=mIdx.map(i=>entry.brands[brand].months[i]||0);
+    const bdata = mIdx.map(() => 0);
+    let firstName = '';
+    for (const e of entries) {
+      if (!e.brands[brand]) continue;
+      mIdx.forEach((mi, pos) => { bdata[pos] += e.brands[brand].months[mi] || 0; });
+      if (!firstName && e.brands[brand].name) firstName = e.brands[brand].name;
+    }
     if(!bdata.some(v=>v>0)) continue;
-    const label=entry.brands[brand].name?`${brand} (${entry.brands[brand].name})`:brand;
+    const label = firstName ? `${brand} (${firstName})` : brand;
     datasets.push({ label, data:bdata, backgroundColor:cfg, borderRadius:3 });
   }
 
@@ -1296,13 +1321,13 @@ function renderMarketShare() {
     return;
   }
   const entry = entries[0];
+  const hangjeong = entry.행정구역 || entry.상권 || '';
 
   // 배지 & 서브 레이블 업데이트
-  const areaName = entry.상권 || entry.행정구역 || '';
   const badge = document.getElementById('mshare-badge-inner');
-  if(badge) badge.textContent = `안쪽 = ${areaName}`;
+  if(badge) badge.textContent = `안쪽 = ${hangjeong}`;
   const subEl = document.getElementById('mshare-sub');
-  if(subEl) subEl.textContent = `${entry.행정구역} (${entry.상권}) 기준 연누계`;
+  if(subEl) subEl.textContent = `${hangjeong} 기준 연누계`;
 
   // ── 안쪽 링: 해당 상권 (일룸=ERP, 경쟁사=시트)
   const iloomAmt = allRows.filter(r=>r.store===currentStore&&r.type!=='(판촉물택배)'&&r.amt>0).reduce((s,r)=>s+r.amt,0);
@@ -1310,12 +1335,19 @@ function renderMarketShare() {
   const innerData   = [iloomAmt];
   const shareBg     = [RED];
 
+  // 같은 행정구역 내 경쟁사 데이터 합산 (parseCompetitor에서 이미 합산됨)
   for (const [brand] of Object.entries(COMP_COLORS)) {
-    if (!entry.brands[brand]) continue;
-    const amt = mIdx.reduce((s,i) => s + (entry.brands[brand].months[i]||0), 0);
-    if (amt > 0) {
+    let totalAmt = 0;
+    let firstName = '';
+    for (const e of entries) {
+      if (!e.brands[brand]) continue;
+      const amt = mIdx.reduce((s,i) => s + (e.brands[brand].months[i]||0), 0);
+      totalAmt += amt;
+      if (!firstName && e.brands[brand].name) firstName = e.brands[brand].name;
+    }
+    if (totalAmt > 0) {
       shareLabels.push(brand);
-      innerData.push(amt);
+      innerData.push(totalAmt);
       shareBg.push(COMP_COLORS[brand]);
     }
   }
@@ -1378,7 +1410,7 @@ function renderMarketShare() {
       ctx.textBaseline = 'middle';
       ctx.font = "bold 13px 'Noto Sans KR', sans-serif";
       ctx.fillStyle = '#555';
-      ctx.fillText(areaName, cx, cy);
+      ctx.fillText(hangjeong, cx, cy);
       ctx.restore();
     }
   };
@@ -1415,21 +1447,23 @@ function renderMarketShare() {
   const statsEl = document.getElementById('mshare-stats');
   if(!statsEl) return;
 
-  // 해당 상권 매장 수 집계 (현재 매장 기준 상권 내 경쟁사 매장 수)
+  // 해당 상권 매장 수 집계 (쉼표 구분 이름 각각 카운트)
   const nationalStoreCount = {};
   for (const brand of shareLabels.slice(1)) {
-    const names = new Set(
-      entries.filter(e => e.brands[brand]?.name).map(e => e.brands[brand].name)
-    );
+    const names = new Set();
+    entries.forEach(e => {
+      const n = e.brands[brand]?.name || '';
+      n.split(',').forEach(s => { if(s.trim()) names.add(s.trim()); });
+    });
     nationalStoreCount[brand] = names;
   }
 
   const header = `
     <tr style="border-bottom:2px solid #E8E8E8;">
-      <th style="text-align:left;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">브랜드</th>
-      <th style="text-align:right;padding:7px 8px;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">전국평균</th>
-      <th style="text-align:right;padding:7px 8px;font-size:11px;color:#c80a1e;font-weight:600;letter-spacing:0.3px;">해당 상권</th>
-      <th style="text-align:right;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;">매장 수</th>
+      <th style="text-align:left;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;width:30%;white-space:nowrap;">브랜드</th>
+      <th style="text-align:right;padding:7px 8px;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;white-space:nowrap;">전국평균</th>
+      <th style="text-align:right;padding:7px 8px;font-size:11px;color:#c80a1e;font-weight:600;letter-spacing:0.3px;white-space:nowrap;">해당 상권 (전국평균 대비)</th>
+      <th style="text-align:right;padding:7px 0;font-size:11px;color:#999;font-weight:600;letter-spacing:0.3px;white-space:nowrap;">매장 수</th>
     </tr>`;
 
   const dataRows = shareLabels.map((label, i) => {
@@ -1449,19 +1483,19 @@ function renderMarketShare() {
           <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${shareBg[i]};flex-shrink:0;"></span>
           <div>
             <div style="font-size:13px;font-weight:${isIloom?700:400};color:${isIloom?'#222':'#555'};">${label}</div>
-            ${storeName ? `<div style="font-size:10px;color:#999;margin-top:1px;">${storeName}</div>` : ''}
+            ${storeName ? `<div style="font-size:10px;color:#999;margin-top:1px;word-break:break-all;line-height:1.4;">${storeName}</div>` : ''}
           </div>
         </div>
       </td>
-      <td style="padding:7px 8px;font-family:'Montserrat',sans-serif;font-size:13px;color:#aaa;text-align:right;">${iPct}%</td>
-      <td style="padding:7px 8px;text-align:right;">
+      <td style="padding:7px 8px;font-family:'Montserrat',sans-serif;font-size:13px;color:#aaa;text-align:right;white-space:nowrap;">${iPct}%</td>
+      <td style="padding:7px 8px;text-align:right;white-space:nowrap;">
         <span style="font-family:'Montserrat',sans-serif;font-size:13px;font-weight:${isIloom?700:500};color:${isIloom?RED:'#444'};">${oPct}%</span>${arrow}
       </td>
-      <td style="padding:7px 0;font-family:'Montserrat',sans-serif;font-size:12px;color:#555;text-align:right;font-weight:600;">${storeCount}</td>
+      <td style="padding:7px 0;font-family:'Montserrat',sans-serif;font-size:12px;color:#555;text-align:right;font-weight:600;white-space:nowrap;">${storeCount}</td>
     </tr>`;
   }).join('');
 
-  statsEl.innerHTML = `<table style="width:100%;border-collapse:collapse;">${header}${dataRows}</table>`;
+  statsEl.innerHTML = `<table style="width:100%;border-collapse:collapse;table-layout:fixed;">${header}${dataRows}</table>`;
 }
 
 function renderItems() {
@@ -1568,7 +1602,8 @@ function renderBrandTrend(storeName, months) {
     return;
   }
   const entry = entries[0];
-  if(subEl) subEl.textContent = `${entry.행정구역} (${entry.상권}) 기준`;
+  const hangjeong = entry.행정구역 || entry.상권 || '';
+  if(subEl) subEl.textContent = `${hangjeong} 기준`;
 
   const labels = months.map(m => +m.split('-')[1] + '월');
   const mIdx   = months.map(m => +m.split('-')[1] - 1);
@@ -1592,10 +1627,15 @@ function renderBrandTrend(storeName, months) {
   }];
 
   for (const [brand, color] of Object.entries(COMP_COLORS)) {
-    if (!entry.brands[brand]) continue;
-    const data = mIdx.map(i => entry.brands[brand].months[i] || 0);
+    const data = mIdx.map(() => 0);
+    let firstName = '';
+    for (const e of entries) {
+      if (!e.brands[brand]) continue;
+      mIdx.forEach((mi, pos) => { data[pos] += e.brands[brand].months[mi] || 0; });
+      if (!firstName && e.brands[brand].name) firstName = e.brands[brand].name;
+    }
     if (!data.some(v => v > 0)) continue;
-    const label = entry.brands[brand].name ? `${brand} (${entry.brands[brand].name})` : brand;
+    const label = firstName ? `${brand} (${firstName})` : brand;
     datasets.push({
       label,
       data,
@@ -1955,177 +1995,6 @@ async function renderNewsBanner() {
             : `<span style="font-size:12px;color:#333;line-height:1.45;">${title}</span>`}
         </div>`;
     }).join('')}`;
-}
-
-// ===== HQ DASHBOARD JS =====
-const OFFICE_COLORS = {
-  '서울사업소':'#c80a1e','경기사업소':'#2563eb','대전사업소':'#d97706',
-  '광주사업소':'#16a34a','대구사업소':'#7c3aed','부산사업소':'#0891b2'
-};
-const HQ_OFFICES = ['서울사업소','경기사업소','대전사업소','광주사업소','대구사업소','부산사업소'];
-const HQ_WEEKS = ['W01','W02','W03','W04','W05','W06','W07','W08','W09','W10','W11','W12','W13','W14','W15','W16'];
-function rand(min,max){ return Math.round(Math.random()*(max-min)+min); }
-const HQ_SAMPLE = {
-  officeYTD: {'서울사업소':142,'경기사업소':198,'대전사업소':87,'광주사업소':73,'대구사업소':95,'부산사업소':110},
-  channelMix: {'리테일':62,'직영':38},
-  weeklyChannel: {'리테일':HQ_WEEKS.map(()=>rand(800,1400)),'직영':HQ_WEEKS.map(()=>rand(400,800))},
-  weeklyOffice: Object.fromEntries(HQ_OFFICES.map(o=>[o,HQ_WEEKS.map(()=>rand(200,600))])),
-  dailyTotal: Array.from({length:30},()=>rand(50,350)),
-  storeRank: [
-    {name:'스타필드고양',office:'경기사업소',ytd:198},{name:'부산센텀4',office:'부산사업소',ytd:187},
-    {name:'대구3',office:'대구사업소',ytd:165},{name:'논현4',office:'서울사업소',ytd:154},
-    {name:'분당서현',office:'경기사업소',ytd:142},{name:'봉선5',office:'광주사업소',ytd:138},
-    {name:'대전둔산5',office:'대전사업소',ytd:131},{name:'창원3',office:'부산사업소',ytd:128},
-    {name:'인천중앙2',office:'경기사업소',ytd:119},{name:'수원광교3',office:'경기사업소',ytd:115},
-  ],
-};
-let hqWeeklyView = 'index';
-let hqMemos = [];
-
-function hqShowSection(name, el) {
-  document.querySelectorAll('.hq-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('#sidebar .nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('hq-section-'+name).classList.add('active');
-  if(el) el.classList.add('active');
-  hqRenderSection(name);
-}
-function hqSetFilter(type,val,btn){
-  btn.closest('.filter-tabs').querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-function hqApplyFilters(){}
-function hqAnomalyFilter(type,val,btn){
-  btn.closest('.filter-tabs').querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-function hqSetWeeklyView(view,btn){
-  hqWeeklyView=view;
-  btn.closest('.view-tabs').querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  hqRenderWeeklyOffice();
-}
-function hqRenderSection(name){
-  const fns={ranking:hqRenderRanking,channel:hqRenderChannel,weekly:hqRenderWeekly,
-             anomaly:hqRenderAnomaly,forecast:hqRenderForecast,series:hqRenderSeries,
-             monthly:hqRenderMonthly,daily:hqRenderDaily};
-  if(fns[name]) fns[name]();
-}
-
-function hqRenderRanking(){
-  document.getElementById('hq-kpi-total').innerHTML='705<span class="kpi-unit">억</span>';
-  document.getElementById('hq-kpi-total-sub').textContent='1월~4월 누계';
-  document.getElementById('hq-kpi-monthly').innerHTML='182<span class="kpi-unit">억</span>';
-  document.getElementById('hq-kpi-monthly-sub')&&(document.getElementById('hq-kpi-monthly-sub').textContent='4월 누계');
-  document.getElementById('hq-kpi-yoy').innerHTML='+5.3<span class="kpi-unit">%</span>';
-  document.getElementById('hq-kpi-yoy').style.color='#16a34a';
-
-  destroyChart('officeRank');
-  charts['officeRank']=new Chart(document.getElementById('chart-office-rank'),{
-    type:'bar',data:{labels:HQ_OFFICES,datasets:[{data:HQ_OFFICES.map(o=>HQ_SAMPLE.officeYTD[o]),backgroundColor:HQ_OFFICES.map(o=>OFFICE_COLORS[o]),borderRadius:3}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}억원`}}},scales:{x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'억'}},y:{grid:{display:false}}}}
-  });
-  destroyChart('channelMix');
-  charts['channelMix']=new Chart(document.getElementById('chart-channel-mix'),{
-    type:'doughnut',data:{labels:Object.keys(HQ_SAMPLE.channelMix),datasets:[{data:Object.values(HQ_SAMPLE.channelMix),backgroundColor:[RED,'#2563eb'],borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}%`}}}}
-  });
-  const sorted=[...HQ_SAMPLE.storeRank].sort((a,b)=>b.ytd-a.ytd);
-  document.getElementById('rank-table-wrap').style.height=Math.max(280,sorted.length*28)+'px';
-  destroyChart('storeRank');
-  charts['storeRank']=new Chart(document.getElementById('chart-store-rank'),{
-    type:'bar',data:{labels:sorted.map(s=>s.name),datasets:[{data:sorted.map(s=>s.ytd),backgroundColor:sorted.map(s=>OFFICE_COLORS[s.office]||'#ccc'),borderRadius:2}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}백만원`}}},scales:{x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}},y:{grid:{display:false},ticks:{font:{family:'Noto Sans KR',size:11}}}}}
-  });
-}
-
-function hqRenderChannel(){
-  const months=['1월','2월','3월','4월'];
-  destroyChart('channelCompare');
-  charts['channelCompare']=new Chart(document.getElementById('chart-channel-compare'),{
-    type:'bar',data:{labels:months,datasets:[{label:'리테일',data:[420,445,398,432],backgroundColor:RED,borderRadius:3},{label:'직영',data:[280,265,301,288],backgroundColor:'#2563eb',borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}}}}
-  });
-  destroyChart('yoy');
-  const yoyData=[5.2,3.8,-1.2,7.4];
-  charts['yoy']=new Chart(document.getElementById('chart-yoy'),{
-    type:'bar',data:{labels:months,datasets:[{label:'리테일 YoY',data:yoyData,backgroundColor:yoyData.map(v=>v>=0?'#dcfce7':'#fee2e2'),borderRadius:3},{label:'직영 YoY',data:[2.1,4.5,6.3,1.8],backgroundColor:'#dbeafe',borderRadius:3}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw>0?'+':''}${ctx.raw}%`}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'%'}}}}
-  });
-}
-
-function hqRenderWeekly(){
-  destroyChart('weeklyChannel');
-  charts['weeklyChannel']=new Chart(document.getElementById('chart-weekly-channel'),{
-    type:'line',data:{labels:HQ_WEEKS,datasets:[{label:'리테일',data:HQ_SAMPLE.weeklyChannel['리테일'],borderColor:RED,backgroundColor:RED+'22',borderWidth:2,pointRadius:3,tension:0.3,fill:false},{label:'직영',data:HQ_SAMPLE.weeklyChannel['직영'],borderColor:'#2563eb',backgroundColor:'#2563eb22',borderWidth:2,pointRadius:3,tension:0.3,fill:false}]},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:12,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}백만원`}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}}}}
-  });
-  hqRenderWeeklyOffice();
-}
-
-function hqRenderWeeklyOffice(){
-  let data={};
-  if(hqWeeklyView==='index') HQ_OFFICES.forEach(o=>{const b=HQ_SAMPLE.weeklyOffice[o][0]||1;data[o]=HQ_SAMPLE.weeklyOffice[o].map(v=>Math.round(v/b*100));});
-  else if(hqWeeklyView==='wow') HQ_OFFICES.forEach(o=>{data[o]=HQ_SAMPLE.weeklyOffice[o].map((v,i)=>i===0?0:Math.round((v-HQ_SAMPLE.weeklyOffice[o][i-1])/HQ_SAMPLE.weeklyOffice[o][i-1]*100));});
-  else data=HQ_SAMPLE.weeklyOffice;
-  destroyChart('weeklyOffice');
-  charts['weeklyOffice']=new Chart(document.getElementById('chart-weekly-office'),{
-    type:'line',data:{labels:HQ_WEEKS,datasets:HQ_OFFICES.map(o=>({label:o,data:data[o],borderColor:OFFICE_COLORS[o],backgroundColor:OFFICE_COLORS[o]+'22',borderWidth:2,pointRadius:2,tension:0.3,fill:false}))},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10,usePointStyle:true,boxWidth:10}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>hqWeeklyView==='index'?v:hqWeeklyView==='wow'?v+'%':v+'백만'}}}}
-  });
-}
-
-function hqRenderAnomaly(){
-  document.getElementById('hq-anomaly-table').innerHTML=`<table class="data-table"><thead><tr><th>매장</th><th>사업소</th><th>유형</th><th style="text-align:right">전주</th><th style="text-align:right">금주</th><th style="text-align:right">변화율</th></tr></thead><tbody><tr><td>스타필드수원</td><td>경기사업소</td><td><span class="anomaly-badge anomaly-up">급등</span></td><td style="text-align:right">82백만</td><td style="text-align:right">134백만</td><td style="text-align:right;color:#16a34a;font-weight:700">+63.4%</td></tr><tr><td>마산6</td><td>부산사업소</td><td><span class="anomaly-badge anomaly-down">급락</span></td><td style="text-align:right">95백만</td><td style="text-align:right">41백만</td><td style="text-align:right;color:#c80a1e;font-weight:700">-56.8%</td></tr><tr><td>서산4</td><td>대전사업소</td><td><span class="anomaly-badge anomaly-zero">0원 전환</span></td><td style="text-align:right">67백만</td><td style="text-align:right">0</td><td style="text-align:right;color:#555">-100%</td></tr></tbody></table>`;
-}
-
-function hqRenderForecast(){
-  const days=Array.from({length:30},(_,i)=>`${i+1}일`);
-  const actual=Array.from({length:19},()=>rand(30,120));
-  destroyChart('forecast');
-  charts['forecast']=new Chart(document.getElementById('chart-forecast'),{
-    type:'line',data:{labels:days,datasets:[{label:'실적',data:[...actual,...Array(11).fill(null)],borderColor:RED,borderWidth:2,pointRadius:2,tension:0.3,fill:false},{label:'예측',data:[...Array(18).fill(null),actual[18],...Array.from({length:11},()=>rand(30,100))],borderColor:'#888',borderWidth:2,borderDash:[5,4],pointRadius:2,tension:0.3,fill:false}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10,usePointStyle:true}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}백만원`}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:10}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}}}}
-  });
-}
-
-function hqRenderSeries(){
-  const series=['라디우스','엘리움','첼시','마레','에르디아','루시','센트','알바','클레','베르디'];
-  const vals=series.map(()=>rand(200,1200));
-  document.getElementById('hq-series-table').innerHTML=`<table class="data-table"><thead><tr><th>순위</th><th>시리즈</th><th style="text-align:right">YTD 수주</th></tr></thead><tbody>${series.map((s,i)=>`<tr><td><span class="rank-badge${i<3?' top':''}">${i+1}</span></td><td>${s}</td><td style="text-align:right;font-family:'Montserrat',sans-serif;font-weight:600;">${vals[i]}백만</td></tr>`).join('')}</tbody></table>`;
-  destroyChart('seriesTrend');
-  charts['seriesTrend']=new Chart(document.getElementById('chart-series-trend'),{
-    type:'line',data:{labels:HQ_WEEKS,datasets:series.slice(0,5).map((s,i)=>({label:s,data:HQ_WEEKS.map(()=>rand(30,200)),borderColor:[RED,'#2563eb','#16a34a','#d97706','#7c3aed'][i],borderWidth:2,pointRadius:2,tension:0.3,fill:false}))},
-    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10,usePointStyle:true,boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw}백만원`}}},scales:{x:{grid:{display:false}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}}}}
-  });
-}
-
-function hqRenderMonthly(){
-  const months=['1월','2월','3월','4월'];
-  destroyChart('monthlyReport');
-  charts['monthlyReport']=new Chart(document.getElementById('chart-monthly-report'),{
-    type:'bar',data:{labels:months,datasets:HQ_OFFICES.map(o=>({label:o,data:months.map(()=>rand(100,400)),backgroundColor:OFFICE_COLORS[o],borderRadius:2}))},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10,boxWidth:10}}},scales:{x:{grid:{display:false},stacked:true},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'},stacked:true}}}
-  });
-}
-
-function hqRenderDaily(){
-  const days=Array.from({length:30},(_,i)=>`${i+1}`);
-  const isWE=[false,false,true,true,false,false,false,true,true,false,false,false,true,true,false,false,false,false,false,true,true,false,false,false,false,false,true,true,false,false];
-  const data=HQ_SAMPLE.dailyTotal;
-  destroyChart('daily');
-  charts['daily']=new Chart(document.getElementById('chart-daily'),{
-    type:'bar',data:{labels:days,datasets:[{data,backgroundColor:data.map((_,i)=>isWE[i]?'#E0E0E0':RED),borderRadius:2}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.raw}백만원`}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}}}}
-  });
-}
-
-function hqAddMemo(){
-  const text=document.getElementById('hq-memo-text').value.trim();
-  if(!text) return;
-  hqMemos.push({text,time:new Date().toLocaleString('ko-KR')});
-  const el=document.getElementById('hq-memo-list');
-  el.innerHTML=hqMemos.map((m,i)=>`<div style="padding:8px 12px;background:#FAFAFA;border-left:3px solid ${RED};margin-bottom:6px;display:flex;justify-content:space-between;"><div><span style="font-size:11px;color:#999;">${m.time}</span><div style="font-size:13px;margin-top:4px;">${m.text}</div></div><button onclick="hqMemos.splice(${i},1);document.getElementById('hq-memo-list').innerHTML=''" style="background:none;border:none;color:#bbb;cursor:pointer;">×</button></div>`).join('');
-  document.getElementById('hq-memo-text').value='';
 }
 
 // ===== LOAD =====

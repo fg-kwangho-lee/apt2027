@@ -8,7 +8,36 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333; display: flex; height: 100vh; overflow: hidden; }
+body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333; }
+
+/* LOGIN */
+#login-screen {
+  position: fixed; inset: 0; background: #F8F8F8;
+  display: flex; align-items: center; justify-content: center; z-index: 999;
+}
+.login-box {
+  background: #fff; padding: 48px 40px; width: 360px;
+  border-top: 4px solid #c80a1e; box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+}
+.login-logo { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 28px; color: #c80a1e; margin-bottom: 4px; }
+.login-subtitle { font-size: 13px; color: #999; margin-bottom: 28px; }
+.login-tag { display: inline-block; font-size: 11px; font-weight: 700; background: #1a1a2e; color: #fff; padding: 2px 8px; border-radius: 2px; margin-bottom: 20px; }
+.login-box input {
+  width: 100%; padding: 12px 14px; border: 1px solid #E0E0E0;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; color: #333;
+  background: #fff; margin-bottom: 10px; outline: none;
+}
+.login-box input:focus { border-color: #c80a1e; }
+.login-btn {
+  width: 100%; padding: 14px; background: #c80a1e; color: #fff;
+  font-family: 'Noto Sans KR', sans-serif; font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer; margin-top: 4px;
+}
+.login-btn:hover { background: #a00816; }
+.login-error { font-size: 13px; color: #c80a1e; margin-top: 10px; min-height: 18px; }
+
+/* HQ APP */
+#hq-app { display: none; height: 100vh; overflow: hidden; }
 
 /* ── SIDEBAR ── */
 #sidebar {
@@ -130,6 +159,9 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
 </head>
 <body>
 
+<!-- ══ HQ APP ══ -->
+<div id="hq-app" style="display:flex;flex-direction:row;height:100vh;overflow:hidden;">
+
 <!-- ══ SIDEBAR ══ -->
 <div id="sidebar">
   <div class="sidebar-logo">
@@ -180,6 +212,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
       <span class="meta-badge">전국 86개점 (직영+리테일)</span>
       <span class="meta-badge" id="h-period">데이터 로드 중...</span>
       <span class="meta-badge red" id="h-update">-</span>
+      <button onclick="doHqLogout()" style="margin-left:8px;padding:4px 12px;font-size:12px;font-family:'Noto Sans KR',sans-serif;background:#fff;border:1px solid #E0E0E0;color:#666;cursor:pointer;">로그아웃</button>
     </div>
   </header>
 
@@ -483,6 +516,8 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+</div><!-- /#hq-app -->
 
 <script>
 const RED = '#c80a1e';
