@@ -94,7 +94,7 @@ function parseRssItems(xml, count) {
 
 async function fetchNews(query, count) {
   try {
-    const encoded = encodeURIComponent(query);
+    const encoded = encodeURIComponent(query + ' when:7d');
     const url = `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
     const xml = await fetchUrl(url);
     return parseRssItems(xml, count);
