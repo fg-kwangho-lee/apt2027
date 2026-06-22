@@ -36,18 +36,19 @@ const TOPICS = {
 
 // 슬랙 발송 대상
 const SLACK_REGIONS = [
-  { label: '🏙️ 부산', keyword: '부산' },
-  { label: '🌊 경남', keyword: '경남' },
-  { label: '🏭 울산', keyword: '울산' },
+  { label: '🏙️ 대구', keyword: '대구' },
+  { label: '🗼 서울', keyword: '서울' },
+  { label: '🏘️ 고양', keyword: '고양시' },
 ];
 
 // 시트 누적 전용 (슬랙 미발송)
 const SHEET_REGIONS = [
-  { label: '서울', keyword: '서울' },
+  { label: '부산', keyword: '부산' },
+  { label: '경남', keyword: '경남' },
+  { label: '울산', keyword: '울산' },
   { label: '경기', keyword: '경기' },
   { label: '대전', keyword: '대전' },
   { label: '광주', keyword: '광주' },
-  { label: '대구', keyword: '대구' },
   { label: '제주', keyword: '제주' },
   { label: '강원', keyword: '강원' },
 ];
@@ -94,10 +95,15 @@ function parseRssItems(xml, count) {
 
 async function fetchNews(query, count) {
   try {
-    const encoded = encodeURIComponent(query + ' when:7d');
-    const url = `https://news.google.com/rss/search?q=${encoded}&hl=ko&gl=KR&ceid=KR:ko`;
-    const xml = await fetchUrl(url);
-    return parseRssItems(xml, count);
+    const encoded7 = encodeURIComponent(query + ' when:7d');
+    const xml7 = await fetchUrl(`https://news.google.com/rss/search?q=${encoded7}&hl=ko&gl=KR&ceid=KR:ko`);
+    const items7 = parseRssItems(xml7, count);
+    if (items7.length > 0) return items7;
+
+    // 7일 결과 없으면 30일로 재시도
+    const encoded30 = encodeURIComponent(query + ' when:30d');
+    const xml30 = await fetchUrl(`https://news.google.com/rss/search?q=${encoded30}&hl=ko&gl=KR&ceid=KR:ko`);
+    return parseRssItems(xml30, count);
   } catch (e) {
     console.error(`fetch 실패 (${query.substring(0, 20)}): ${e.message}`);
     return [];
