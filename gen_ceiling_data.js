@@ -1,6 +1,6 @@
 /**
  * gen_ceiling_data.js
- * 363개 아파트 천장고 데이터 생성 (2026+2027)
+ * 아파트 천장고 데이터 생성 (2026+2027+2028)
  */
 const fs = require('fs');
 const path = require('path');
@@ -132,10 +132,11 @@ function readAptFile(filename) {
     });
 }
 
-// apt_list_2026.txt + apt_list.txt(2027) 합산
+// apt_list_2026.txt + apt_list.txt(2027) + apt_list_2028.txt 합산
 const aptList = [
   ...readAptFile('apt_list_2026.txt'),
   ...readAptFile('apt_list.txt'),
+  ...readAptFile('apt_list_2028.txt'),
 ];
 
 // 각 아파트 천장고 결정

@@ -1,7 +1,7 @@
 /**
  * scrape_asil.js
- * asil.kr에서 2027년 전국 아파트 입주물량 데이터를 가져와
- * asil_2027_raw.csv + apt_list.txt 갱신
+ * asil.kr에서 2027+2028년 전국 아파트 입주물량 데이터를 가져와
+ * asil_2027_raw.csv + apt_list.txt / apt_list_2028.txt 갱신
  */
 const https = require('https');
 const fs    = require('fs');
@@ -51,13 +51,13 @@ function get(url) {
   });
 }
 
-async function fetchSido(code, name) {
+async function fetchSidoYear(code, name, year) {
   const qs = new URLSearchParams({
     area: code,
     order: 'movein_yyyymm',
     orderby: 'asc',
-    sY: '2027', sM: '1',
-    eY: '2027', eM: '12',
+    sY: String(year), sM: '1',
+    eY: String(year), eM: '12',
   });
   const res = await get(`/app/data/data_movein.jsp?${qs}`);
   if (res.status !== 200) throw new Error(`${name} HTTP ${res.status}`);
@@ -70,52 +70,59 @@ async function fetchSido(code, name) {
     region: name,
     addr:      (item.addr  || '').trim(),
     name:      (item.name  || '').trim(),
-    movein:    (item.movein || '').trim(),           // "2027년 3월"
+    movein:    (item.movein || '').trim(),
     household: String(item.household || '0').replace(/[^0-9]/g, ''),
   })).filter(r => r.name && r.movein);
 }
 
-async function main() {
-  console.log('asil.kr 2027년 전국 입주물량 수집 중...');
+async function fetchAllForYear(year) {
   const all = [];
-
   for (const sido of SIDO_CODES) {
     try {
-      const rows = await fetchSido(sido.code, sido.name);
-      console.log(`  ${sido.name}: ${rows.length}개`);
+      const rows = await fetchSidoYear(sido.code, sido.name, year);
+      console.log(`  [${year}] ${sido.name}: ${rows.length}개`);
       all.push(...rows);
     } catch (e) {
-      console.warn(`  ${sido.name} 실패: ${e.message}`);
+      console.warn(`  [${year}] ${sido.name} 실패: ${e.message}`);
     }
-    // 요청 간 간격
     await new Promise(r => setTimeout(r, 300));
   }
-
-  // 중복 제거 (같은 단지명+입주월)
+  // 중복 제거
   const seen = new Set();
-  const deduped = all.filter(r => {
+  return all.filter(r => {
     const key = `${r.name}|${r.movein}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
-  });
+  }).sort((a, b) => a.movein.localeCompare(b.movein, 'ko'));
+}
 
-  // 입주월 오름차순 정렬
-  deduped.sort((a, b) => a.movein.localeCompare(b.movein, 'ko'));
+async function main() {
+  console.log('asil.kr 2027+2028년 전국 입주물량 수집 중...');
 
-  // CSV 저장
-  const csvLines = ['"region","addr","name","movein","movein_ym","household"'];
-  for (const r of deduped) {
+  // 2027 수집 → apt_list.txt
+  const data2027 = await fetchAllForYear(2027);
+  const csv2027 = ['"region","addr","name","movein","movein_ym","household"'];
+  for (const r of data2027) {
     const ym = r.movein.replace(/[^0-9]/g, '').padEnd(6, '0');
-    csvLines.push(`"${r.region}","${r.addr}","${r.name}","${r.movein}","${ym}","${r.household}"`);
+    csv2027.push(`"${r.region}","${r.addr}","${r.name}","${r.movein}","${ym}","${r.household}"`);
   }
-  fs.writeFileSync(path.join(__dirname, 'asil_2027_raw.csv'), csvLines.join('\n'), 'utf8');
+  fs.writeFileSync(path.join(__dirname, 'asil_2027_raw.csv'), csv2027.join('\n'), 'utf8');
+  fs.writeFileSync(path.join(__dirname, 'apt_list.txt'),
+    data2027.map(r => `${r.name}|${r.addr}|${r.movein}|${r.household}`).join('\n') + '\n', 'utf8');
+  console.log(`✅ 2027: ${data2027.length}개 저장`);
 
-  // apt_list.txt 저장
-  const aptLines = deduped.map(r => `${r.name}|${r.addr}|${r.movein}|${r.household}`);
-  fs.writeFileSync(path.join(__dirname, 'apt_list.txt'), aptLines.join('\n') + '\n', 'utf8');
-
-  console.log(`\n✅ 총 ${deduped.length}개 단지 저장 완료`);
+  // 2028 수집 → apt_list_2028.txt
+  const data2028 = await fetchAllForYear(2028);
+  const csv2028 = ['"region","addr","name","movein","movein_ym","household"'];
+  for (const r of data2028) {
+    const ym = r.movein.replace(/[^0-9]/g, '').padEnd(6, '0');
+    csv2028.push(`"${r.region}","${r.addr}","${r.name}","${r.movein}","${ym}","${r.household}"`);
+  }
+  fs.writeFileSync(path.join(__dirname, 'asil_2028_raw.csv'), csv2028.join('\n'), 'utf8');
+  fs.writeFileSync(path.join(__dirname, 'apt_list_2028.txt'),
+    data2028.map(r => `${r.name}|${r.addr}|${r.movein}|${r.household}`).join('\n') + '\n', 'utf8');
+  console.log(`✅ 2028: ${data2028.length}개 저장`);
 }
 
 main().catch(e => { console.error('❌', e.message); process.exit(1); });
