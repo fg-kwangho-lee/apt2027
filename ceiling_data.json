@@ -2848,58 +2848,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "속초동원베네스트오션스위트(민간임대,주상복합)",
-    "addr": "강원 속초 청호동",
-    "movein": "2028년 11월",
-    "households": 313,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "블랑써밋74",
-    "addr": "부산 동구 범일동",
-    "movein": "2028년 11월",
-    "households": 998,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "번영로롯데캐슬센트럴스카이(주상복합)",
-    "addr": "울산 중구 학산동",
-    "movein": "2028년 11월",
-    "households": 634,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "동작구수방사",
-    "addr": "서울 동작구 노량진동",
-    "movein": "2028년 12월",
-    "households": 556,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "오남역서희스타힐스여의재1단지",
-    "addr": "경기 남양주시",
-    "movein": "2028년 12월",
-    "households": 1308,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "오남역서희스타힐스여의재3단지",
-    "addr": "경기 남양주시",
-    "movein": "2028년 12월",
-    "households": 1056,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "창원메가시티자이&위브",
-    "addr": "경남 창원 진해구 여좌동",
-    "movein": "2028년 12월",
-    "households": 2638,
+    "name": "트리븐논산",
+    "addr": "충남 논산 취암동",
+    "movein": "2028년 1월",
+    "households": 429,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -2928,10 +2880,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "래미안센트리폴2BL",
-    "addr": "인천 연수구",
+    "name": "무거비스타동원(주상복합)",
+    "addr": "울산 남구 무거동",
     "movein": "2028년 1월",
-    "households": 819,
+    "households": 481,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -2944,34 +2896,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "트리븐논산",
-    "addr": "충남 논산 취암동",
+    "name": "래미안센트리폴2BL",
+    "addr": "인천 연수구",
     "movein": "2028년 1월",
-    "households": 429,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "무거비스타동원(주상복합)",
-    "addr": "울산 남구 무거동",
-    "movein": "2028년 1월",
-    "households": 481,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "양주역푸르지오센터파크",
-    "addr": "경기 양주 남방동",
-    "movein": "2028년 2월",
-    "households": 1172,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "한강수자인오브센트",
-    "addr": "경기 김포 북변동",
-    "movein": "2028년 2월",
-    "households": 3058,
+    "households": 819,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3000,6 +2928,22 @@
     "source": "추정(브랜드기준)"
   },
   {
+    "name": "양주역푸르지오센터파크",
+    "addr": "경기 양주 남방동",
+    "movein": "2028년 2월",
+    "households": 1172,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "한강수자인오브센트",
+    "addr": "경기 김포 북변동",
+    "movein": "2028년 2월",
+    "households": 3058,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
     "name": "라엘에스",
     "addr": "울산 남구 신정동",
     "movein": "2028년 2월",
@@ -3008,10 +2952,18 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "연신내양우내안애퍼스티지",
-    "addr": "서울 은평구",
+    "name": "탕정푸르지오센터파크",
+    "addr": "충남 아산시",
     "movein": "2028년 3월",
-    "households": 260,
+    "households": 1416,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "쌍용더플래티넘스카이",
+    "addr": "강원 춘천 약사동",
+    "movein": "2028년 3월",
+    "households": 228,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3032,34 +2984,18 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "인하대역푸르지오에듀포레",
-    "addr": "인천 미추홀구 학익동",
-    "movein": "2028년 3월",
-    "households": 1500,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "쌍용더플래티넘스카이",
-    "addr": "강원 춘천 약사동",
-    "movein": "2028년 3월",
-    "households": 228,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "탕정푸르지오센터파크",
-    "addr": "충남 아산시",
-    "movein": "2028년 3월",
-    "households": 1416,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
     "name": "둔산해링턴플레이스리버파크",
     "addr": "대전 서구",
     "movein": "2028년 3월",
     "households": 336,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "인하대역푸르지오에듀포레",
+    "addr": "인천 미추홀구 학익동",
+    "movein": "2028년 3월",
+    "households": 1500,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3072,10 +3008,18 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "의왕월암A-3블록 신혼희망타운",
-    "addr": "경기 의왕시",
-    "movein": "2028년 4월",
-    "households": 642,
+    "name": "연신내양우내안애퍼스티지",
+    "addr": "서울 은평구",
+    "movein": "2028년 3월",
+    "households": 260,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "세종5-1양우내안애아스펜",
+    "addr": "세종시",
+    "movein": "2028년 3월",
+    "households": 698,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3084,6 +3028,14 @@
     "addr": "경기 의왕시",
     "movein": "2028년 4월",
     "households": 480,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "의왕월암A-3블록 신혼희망타운",
+    "addr": "경기 의왕시",
+    "movein": "2028년 4월",
+    "households": 642,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3104,10 +3056,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "송도자이풍경채그라노블3단지",
+    "name": "송도자이풍경채그라노블5단지",
     "addr": "인천 연수구 송도동",
     "movein": "2028년 4월",
-    "households": 597,
+    "households": 610,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3120,10 +3072,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "송도자이풍경채그라노블5단지",
+    "name": "송도자이풍경채그라노블3단지",
     "addr": "인천 연수구 송도동",
     "movein": "2028년 4월",
-    "households": 610,
+    "households": 597,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3176,50 +3128,10 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "더플래티넘스카이헤론",
-    "addr": "경기 평택 통복동",
-    "movein": "2028년 6월",
-    "households": 784,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "힐스테이트레이크송도5차",
-    "addr": "인천 연수구 송도동",
-    "movein": "2028년 6월",
-    "households": 722,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "원주역중흥S-클래스",
-    "addr": "강원 원주 무실동",
-    "movein": "2028년 6월",
-    "households": 508,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "청주남주대원칸타빌더시엘",
-    "addr": "충북 청주 상당구 남주동",
-    "movein": "2028년 6월",
-    "households": 478,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
     "name": "아너스웰가진주",
     "addr": "경남 진주 가좌동",
     "movein": "2028년 6월",
     "households": 840,
-    "ceiling": "2.3m",
-    "source": "추정(브랜드기준)"
-  },
-  {
-    "name": "힐스테이트문수로센트럴",
-    "addr": "울산 남구 신정동",
-    "movein": "2028년 6월",
-    "households": 566,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3232,10 +3144,42 @@
     "source": "추정(브랜드기준)"
   },
   {
-    "name": "서울원아이파크",
-    "addr": "서울 노원구",
-    "movein": "2028년 7월",
-    "households": 2264,
+    "name": "청주남주대원칸타빌더시엘",
+    "addr": "충북 청주 상당구 남주동",
+    "movein": "2028년 6월",
+    "households": 478,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "원주역중흥S-클래스",
+    "addr": "강원 원주 무실동",
+    "movein": "2028년 6월",
+    "households": 508,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "더플래티넘스카이헤론",
+    "addr": "경기 평택 통복동",
+    "movein": "2028년 6월",
+    "households": 784,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "힐스테이트문수로센트럴",
+    "addr": "울산 남구 신정동",
+    "movein": "2028년 6월",
+    "households": 566,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "힐스테이트레이크송도5차",
+    "addr": "인천 연수구 송도동",
+    "movein": "2028년 6월",
+    "households": 722,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3252,6 +3196,14 @@
     "addr": "경기 고양 일산동구",
     "movein": "2028년 7월",
     "households": 1694,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "서울원아이파크",
+    "addr": "서울 노원구",
+    "movein": "2028년 7월",
+    "households": 2264,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   },
@@ -3276,6 +3228,62 @@
     "addr": "대구 수성구 범어동",
     "movein": "2028년 9월",
     "households": 103,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "속초동원베네스트오션스위트(민간임대,주상복합)",
+    "addr": "강원 속초 청호동",
+    "movein": "2028년 11월",
+    "households": 313,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "번영로롯데캐슬센트럴스카이(주상복합)",
+    "addr": "울산 중구 학산동",
+    "movein": "2028년 11월",
+    "households": 634,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "블랑써밋74",
+    "addr": "부산 동구 범일동",
+    "movein": "2028년 11월",
+    "households": 998,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "창원메가시티자이&위브",
+    "addr": "경남 창원 진해구 여좌동",
+    "movein": "2028년 12월",
+    "households": 2638,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "오남역서희스타힐스여의재1단지",
+    "addr": "경기 남양주시",
+    "movein": "2028년 12월",
+    "households": 1308,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "오남역서희스타힐스여의재3단지",
+    "addr": "경기 남양주시",
+    "movein": "2028년 12월",
+    "households": 1056,
+    "ceiling": "2.3m",
+    "source": "추정(브랜드기준)"
+  },
+  {
+    "name": "동작구수방사",
+    "addr": "서울 동작구 노량진동",
+    "movein": "2028년 12월",
+    "households": 556,
     "ceiling": "2.3m",
     "source": "추정(브랜드기준)"
   }
