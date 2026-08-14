@@ -39,11 +39,13 @@ function readAptList(filename) {
     });
 }
 
-// 2026 + 2027 + 2028 합산 후 입주월 오름차순 정렬
+// 2026 + 2027 + 2028 + 2029 + 2030 합산 후 입주월 오름차순 정렬
 const aptList = [
   ...readAptList('apt_list_2026.txt'),
   ...readAptList('apt_list.txt'),
   ...readAptList('apt_list_2028.txt'),
+  ...readAptList('apt_list_2029.txt'),
+  ...readAptList('apt_list_2030.txt'),
 ].sort((a, b) => a.movein.localeCompare(b.movein, 'ko'));
 
 // 총 세대수
@@ -65,7 +67,7 @@ const html = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APT 입주물량 - 전국 2026~2028년</title>
+  <title>APT 입주물량 - 전국 2026~2030년</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Malgun Gothic', sans-serif; font-size: 13px; background: #f5f5f5; color: #333; padding: 24px; }
@@ -103,7 +105,7 @@ const html = `<!DOCTYPE html>
 <div class="wrap">
   <h1>APT 입주물량</h1>
   <p class="notice">해당 입주물량은 월 단위 업데이트 데이터로 실시간 모든 입주예정단지를 반영하지 않을 수 있습니다. 자료 이용에 참고 바랍니다.</p>
-  <p class="source">출처 : 분양물량조사 &nbsp;|&nbsp; 전국 기준 2026~2028년 &nbsp;|&nbsp; 데이터 업데이트 : ${updatedAt}</p>
+  <p class="source">출처 : 분양물량조사 &nbsp;|&nbsp; 전국 기준 2026~2030년 &nbsp;|&nbsp; 데이터 업데이트 : ${updatedAt}</p>
   <p class="notice" style="margin-bottom:16px;">
     천장고 기준 :
     <span style="background:#dbeeff;color:#1a6b9e;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600;">2.4m</span>
@@ -131,12 +133,15 @@ const html = `<!DOCTYPE html>
       <option value="전남">전남</option>
       <option value="광주">광주</option>
       <option value="제주">제주</option>
+      <option value="세종">세종</option>
     </select>
     <select id="filterYear" onchange="filterTable()">
       <option value="">입주 연도</option>
       <option value="2026년">2026년</option>
       <option value="2027년">2027년</option>
       <option value="2028년">2028년</option>
+      <option value="2029년">2029년</option>
+      <option value="2030년">2030년</option>
     </select>
     <select id="filterMonth" onchange="filterTable()">
       <option value="">입주 월</option>
@@ -249,5 +254,5 @@ ${rows}
 </html>`;
 
 fs.writeFileSync(path.join(__dirname, 'index.html'), html, 'utf8');
-fs.writeFileSync(path.join(__dirname, '전국_아파트_입주물량_2026-2028.html'), html, 'utf8');
+fs.writeFileSync(path.join(__dirname, '전국_아파트_입주물량_2026-2030.html'), html, 'utf8');
 console.log(`✅ HTML 생성 완료 (${aptList.length}개 단지, ${totalHH.toLocaleString()}세대)`);

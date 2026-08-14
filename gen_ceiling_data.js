@@ -132,11 +132,13 @@ function readAptFile(filename) {
     });
 }
 
-// apt_list_2026.txt + apt_list.txt(2027) + apt_list_2028.txt 합산
+// apt_list_2026.txt + apt_list.txt(2027) + apt_list_2028.txt + apt_list_2029.txt + apt_list_2030.txt 합산
 const aptList = [
   ...readAptFile('apt_list_2026.txt'),
   ...readAptFile('apt_list.txt'),
   ...readAptFile('apt_list_2028.txt'),
+  ...readAptFile('apt_list_2029.txt'),
+  ...readAptFile('apt_list_2030.txt'),
 ];
 
 // 각 아파트 천장고 결정
