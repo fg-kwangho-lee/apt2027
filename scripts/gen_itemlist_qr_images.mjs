@@ -40,9 +40,9 @@ async function makeLabeledCard(title, subtitle, qrPngPath, outPath) {
   ctx.strokeRect(12, 12, W - 24, H - 24);
 
   ctx.fillStyle = ACCENT;
-  ctx.font = `600 26px "${regFont}"`;
+  ctx.font = `600 26px "${boldFont}"`;
   ctx.textAlign = 'center';
-  ctx.fillText('ILOOM ITEM LIST', W / 2, 90);
+  ctx.fillText('일룸', W / 2, 90);
 
   ctx.fillStyle = TEXT;
   ctx.font = `700 64px "${boldFont}"`;
@@ -109,9 +109,9 @@ async function main() {
   sctx.fillRect(0, 0, SHEET_W, SHEET_H);
 
   sctx.fillStyle = ACCENT;
-  sctx.font = `600 24px "${regFont}"`;
+  sctx.font = `600 24px "${boldFont}"`;
   sctx.textAlign = 'left';
-  sctx.fillText('ILOOM RETAIL · DEALER DISTRIBUTION', PAD, 60);
+  sctx.fillText('일룸', PAD, 60);
 
   sctx.fillStyle = TEXT;
   sctx.font = `700 44px "${boldFont}"`;
