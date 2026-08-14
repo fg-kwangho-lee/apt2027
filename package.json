@@ -1,6 +1,10 @@
 {
   "dependencies": {
     "pdf-parse": "^2.4.5",
-    "pdfjs-dist": "^5.7.284"
+    "pdfjs-dist": "^5.7.284",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "adm-zip": "^0.5.18"
   }
 }
