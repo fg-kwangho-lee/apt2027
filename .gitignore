@@ -4,3 +4,4 @@ pdfs/
 *.xlsx
 .claude/
 iloom-workspace-claude/
+.fursys-deploy-hub/.tmp/

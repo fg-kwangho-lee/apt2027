@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "path": "C:\\Users\\HP\\apt2027",
+    "repo": "https://github.com/fursys-group-hub/apt2027.git",
+    "framework": "unknown"
+  },
+  "verdict": "caution",
+  "summary": {
+    "critical": 0,
+    "high": 4,
+    "medium": 0,
+    "low": 0
+  },
+  "findings": [
+    {
+      "severity": "high",
+      "rule": "High-Entropy String",
+      "file": "dashboard.html",
+      "line": 447,
+      "message": "암호처럼 보이는 무작위 문자열이 코드에 직접 들어 있어요. 실제 비밀번호·키라면 환경변수로 옮겨 주세요.",
+      "inGitHistory": false,
+      "aiPrompt": "dashboard.html:447은(는) 브라우저에서 그대로 열리는 정적 HTML 이라 여기 박힌 \"High-Entropy String\"은(는) 환경변수로 숨길 수 없어(브라우저는 서버 설정값을 못 읽고, 빌드 단계도 없어). 값을 그대로 두면 누구나 페이지 소스에서 볼 수 있어. → ① 이 키는 이미 노출됐으니 폐기·재발급하고, ② 이 값이 필요한 호출(DB·외부 API 등)은 브라우저에서 직접 하지 말고 서버(백엔드)로 옮겨 서버 환경변수로 처리해줘(브라우저는 사내 백엔드의 `/api/...` 만 호출). ③ 정말 공개돼도 되는 값(공개 API 주소 등)만 HTML 에 남겨줘."
+    },
+    {
+      "severity": "high",
+      "rule": "High-Entropy String",
+      "file": "dashboard.html",
+      "line": 448,
+      "message": "암호처럼 보이는 무작위 문자열이 코드에 직접 들어 있어요. 실제 비밀번호·키라면 환경변수로 옮겨 주세요.",
+      "inGitHistory": false,
+      "aiPrompt": "dashboard.html:448은(는) 브라우저에서 그대로 열리는 정적 HTML 이라 여기 박힌 \"High-Entropy String\"은(는) 환경변수로 숨길 수 없어(브라우저는 서버 설정값을 못 읽고, 빌드 단계도 없어). 값을 그대로 두면 누구나 페이지 소스에서 볼 수 있어. → ① 이 키는 이미 노출됐으니 폐기·재발급하고, ② 이 값이 필요한 호출(DB·외부 API 등)은 브라우저에서 직접 하지 말고 서버(백엔드)로 옮겨 서버 환경변수로 처리해줘(브라우저는 사내 백엔드의 `/api/...` 만 호출). ③ 정말 공개돼도 되는 값(공개 API 주소 등)만 HTML 에 남겨줘."
+    },
+    {
+      "severity": "high",
+      "rule": "High-Entropy String",
+      "file": "dashboard.html",
+      "line": 980,
+      "message": "암호처럼 보이는 무작위 문자열이 코드에 직접 들어 있어요. 실제 비밀번호·키라면 환경변수로 옮겨 주세요.",
+      "inGitHistory": false,
+      "aiPrompt": "dashboard.html:980은(는) 브라우저에서 그대로 열리는 정적 HTML 이라 여기 박힌 \"High-Entropy String\"은(는) 환경변수로 숨길 수 없어(브라우저는 서버 설정값을 못 읽고, 빌드 단계도 없어). 값을 그대로 두면 누구나 페이지 소스에서 볼 수 있어. → ① 이 키는 이미 노출됐으니 폐기·재발급하고, ② 이 값이 필요한 호출(DB·외부 API 등)은 브라우저에서 직접 하지 말고 서버(백엔드)로 옮겨 서버 환경변수로 처리해줘(브라우저는 사내 백엔드의 `/api/...` 만 호출). ③ 정말 공개돼도 되는 값(공개 API 주소 등)만 HTML 에 남겨줘."
+    },
+    {
+      "severity": "high",
+      "rule": "Data File in Git",
+      "file": "asil_2027_raw.csv",
+      "line": null,
+      "message": "업무/기밀 데이터로 보이는 파일이 코드 저장소(git)에 들어 있어요. git 을 데이터 저장소로 쓰지 말고 .gitignore 에 추가한 뒤 추적에서 빼세요(민감 데이터면 IT본부에 알리세요).",
+      "inGitHistory": false,
+      "aiPrompt": "asil_2027_raw.csv의 하드코딩된 \"Data File in Git\"을(를) 환경변수로 옮기고, 코드에서 제거한 뒤 .gitignore와 배포 환경변수 설정을 점검해줘."
+    }
+  ],
+  "envVars": [
+    {
+      "name": "GITHUB_TOKEN",
+      "class": "locked"
+    },
+    {
+      "name": "SLACK_WEBHOOK_URL",
+      "class": "runtime"
+    }
+  ]
+}

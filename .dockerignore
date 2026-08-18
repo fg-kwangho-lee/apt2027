@@ -1,0 +1,34 @@
+# 버전관리·도구 설정
+.git
+.github
+.gitignore
+.nojekyll
+.claude/
+.fursys-deploy-hub/
+
+# 비밀값 (컨테이너·빌드 컨텍스트로 절대 들어가지 않게)
+.env
+.env.*
+
+# 의존성 (정적 사이트라 컨테이너에 불필요)
+node_modules
+package.json
+package-lock.json
+
+# 로컬에서만 쓰는 수집·가공·업로드 스크립트
+*.js
+*.mjs
+*.cjs
+*.py
+scripts/
+
+# 웹에 서빙할 필요 없는 원본 데이터·작업 기록
+*.csv
+*.txt
+ceiling_data.json
+*.md
+
+# 내려받기·임시 파일
+pdfs/
+*.zip
+*.xlsx
