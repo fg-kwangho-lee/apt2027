@@ -157,15 +157,12 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
     <img src="iloom-logo.png" alt="iloom" style="height:36px;margin-bottom:16px;">
 
     <!-- 대리점 폼 -->
-    <select id="store-select"><option value="">매장을 선택하세요</option></select>
-    <input type="password" id="store-pw" placeholder="비밀번호" onkeydown="checkCapsLock(event);if(event.key==='Enter')doLogin()" onkeyup="checkCapsLock(event)" style="display:none;">
+    <select id="store-select" onkeydown="if(event.key==='Enter')doLogin()"><option value="">매장을 선택하세요</option></select>
     <button class="login-btn" onclick="doLogin()">로그인</button>
 
     <div class="login-error" id="login-error"></div>
     <div class="login-hint" id="login-hint"></div>
     <ul class="login-tips" id="login-tips" style="display:none;">
-      <li>아이디/비밀번호를 다시 확인해주세요.</li>
-      <li>Caps Lock이 켜져 있으면 꺼주세요.</li>
       <li>대리점은 매장 선택 후 로그인해주세요.</li>
     </ul>
   </div>
@@ -179,6 +176,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
       <span class="office-tag" id="h-office"></span>
     </div>
     <div style="display:flex;align-items:center;">
+      <span style="font-size:11px;padding:3px 8px;margin-right:8px;border-radius:4px;background:#fdecec;color:#c80a1e;white-space:nowrap;">사내 전용 화면입니다</span>
       <span class="period-badge" id="h-period">-</span>
       <button class="logout-btn" onclick="doLogout()">로그아웃</button>
     </div>
@@ -356,91 +354,94 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F8F8F8; color: #333
 
 <script>
 // ============================================================
-// 매장 비밀번호 설정 — pw 값을 원하는 코드로 변경 가능
+// 매장·사업소 목록
+// 이 화면은 인증 기능이 없으므로, 접근 제한은 사내 서버 접근통제
+// (사내망 / 로그인 프록시)로 처리한다. 비밀번호를 이 파일에 다시 넣지 말 것 —
+// 정적 HTML 이라 브라우저 소스보기로 누구나 읽을 수 있다.
 // ============================================================
 const STORES = {
   // 서울사업소
-  '논현4':        { pw:'61LM03', office:'서울사업소' },
-  '마포2':        { pw:'61LM04', office:'서울사업소' },
-  '송파4':        { pw:'61LM94', office:'서울사업소' },
-  '용산2':        { pw:'51LM07', office:'서울사업소' },
-  '노원':         { pw:'61LM97', office:'서울사업소' },
-  '강동아이파크': { pw:'62LM43', office:'서울사업소' },
-  '롯데청량리':   { pw:'62LM15', office:'서울사업소' },
-  '롯데미아':     { pw:'62LM34', office:'서울사업소' },
-  '롯데영등포':   { pw:'62LM26', office:'서울사업소' },
-  '현대목동':     { pw:'IL0027', office:'서울사업소' },
+  '논현4':        { office:'서울사업소' },
+  '마포2':        { office:'서울사업소' },
+  '송파4':        { office:'서울사업소' },
+  '용산2':        { office:'서울사업소' },
+  '노원':         { office:'서울사업소' },
+  '강동아이파크': { office:'서울사업소' },
+  '롯데청량리':   { office:'서울사업소' },
+  '롯데미아':     { office:'서울사업소' },
+  '롯데영등포':   { office:'서울사업소' },
+  '현대목동':     { office:'서울사업소' },
   // 경기사업소
-  '수원광교3':          { pw:'61LM93', office:'경기사업소' },
-  '분당서현':           { pw:'61LM18', office:'경기사업소' },
-  '스타필드고양':       { pw:'173075', office:'경기사업소' },
-  '신세계파주2':        { pw:'62LM01', office:'경기사업소' },
-  '일산킨텍스':         { pw:'62LM08', office:'경기사업소' },
-  '롯데광명2':          { pw:'IL0024', office:'경기사업소' },
-  '안산상록수2':        { pw:'61LM25', office:'경기사업소' },
-  '안양':               { pw:'62LM04', office:'경기사업소' },
-  '기흥5':              { pw:'IL0022', office:'경기사업소' },
-  '롯데동탄2':          { pw:'215500', office:'경기사업소' },
-  '롯데평촌':           { pw:'62LM17', office:'경기사업소' },
-  '분당2':              { pw:'61LM17', office:'경기사업소' },
-  '평택5':              { pw:'IL0015', office:'경기사업소' },
-  '스타필드수원(6층)':  { pw:'237664', office:'경기사업소' },
-  '스타필드수원키즈(3층)': { pw:'237665', office:'경기사업소' },
-  '롯데수지':           { pw:'IL0019', office:'경기사업소' },
-  '롯데안산':           { pw:'62LM30', office:'경기사업소' },
-  '송도5':              { pw:'IL0000', office:'경기사업소' },
-  '인천검단':           { pw:'62LM12', office:'경기사업소' },
-  '인천중앙2':          { pw:'61LM29', office:'경기사업소' },
-  '김포5':              { pw:'61LM11', office:'경기사업소' },
-  '부천3':              { pw:'61LM16', office:'경기사업소' },
-  '의정부8':            { pw:'61LM28', office:'경기사업소' },
-  '신세계시흥2':        { pw:'62LM40', office:'경기사업소' },
-  '롯데구리':           { pw:'62LM47', office:'경기사업소' },
-  '롯데인천2':          { pw:'237563', office:'경기사업소' },
+  '수원광교3':          { office:'경기사업소' },
+  '분당서현':           { office:'경기사업소' },
+  '스타필드고양':       { office:'경기사업소' },
+  '신세계파주2':        { office:'경기사업소' },
+  '일산킨텍스':         { office:'경기사업소' },
+  '롯데광명2':          { office:'경기사업소' },
+  '안산상록수2':        { office:'경기사업소' },
+  '안양':               { office:'경기사업소' },
+  '기흥5':              { office:'경기사업소' },
+  '롯데동탄2':          { office:'경기사업소' },
+  '롯데평촌':           { office:'경기사업소' },
+  '분당2':              { office:'경기사업소' },
+  '평택5':              { office:'경기사업소' },
+  '스타필드수원(6층)':  { office:'경기사업소' },
+  '스타필드수원키즈(3층)': { office:'경기사업소' },
+  '롯데수지':           { office:'경기사업소' },
+  '롯데안산':           { office:'경기사업소' },
+  '송도5':              { office:'경기사업소' },
+  '인천검단':           { office:'경기사업소' },
+  '인천중앙2':          { office:'경기사업소' },
+  '김포5':              { office:'경기사업소' },
+  '부천3':              { office:'경기사업소' },
+  '의정부8':            { office:'경기사업소' },
+  '신세계시흥2':        { office:'경기사업소' },
+  '롯데구리':           { office:'경기사업소' },
+  '롯데인천2':          { office:'경기사업소' },
   // 대전사업소
-  '대전둔산5':    { pw:'61LM49', office:'대전사업소' },
-  '서대전3':      { pw:'61LM51', office:'대전사업소' },
-  '서산4':        { pw:'62LM60', office:'대전사업소' },
-  '세종2':        { pw:'61LM53', office:'대전사업소' },
-  '천안신방3':    { pw:'61LM55', office:'대전사업소' },
-  '청남3':        { pw:'61LM56', office:'대전사업소' },
-  '청주6':        { pw:'61LM57', office:'대전사업소' },
-  '청주중앙4':    { pw:'61LM58', office:'대전사업소' },
-  '신세계대전(팝업)': { pw:'62LM14', office:'대전사업소' },
-  'NC대전유성':   { pw:'IL0003', office:'대전사업소' },
+  '대전둔산5':    { office:'대전사업소' },
+  '서대전3':      { office:'대전사업소' },
+  '서산4':        { office:'대전사업소' },
+  '세종2':        { office:'대전사업소' },
+  '천안신방3':    { office:'대전사업소' },
+  '청남3':        { office:'대전사업소' },
+  '청주6':        { office:'대전사업소' },
+  '청주중앙4':    { office:'대전사업소' },
+  '신세계대전(팝업)': { office:'대전사업소' },
+  'NC대전유성':   { office:'대전사업소' },
   // 광주사업소
-  '광천5':  { pw:'61LM15', office:'광주사업소' },
-  '덕진2':  { pw:'61LM60', office:'광주사업소' },
-  '봉선5':  { pw:'61LM62', office:'광주사업소' },
-  '빛고을3':{ pw:'61LM63', office:'광주사업소' },
-  '순천4':  { pw:'61LM64', office:'광주사업소' },
-  '전군2':  { pw:'61LM65', office:'광주사업소' },
-  '중화산4':{ pw:'61LM67', office:'광주사업소' },
-  '제주5':  { pw:'238019', office:'광주사업소' },
+  '광천5':  { office:'광주사업소' },
+  '덕진2':  { office:'광주사업소' },
+  '봉선5':  { office:'광주사업소' },
+  '빛고을3':{ office:'광주사업소' },
+  '순천4':  { office:'광주사업소' },
+  '전군2':  { office:'광주사업소' },
+  '중화산4':{ office:'광주사업소' },
+  '제주5':  { office:'광주사업소' },
   // 대구사업소
-  '대구3':    { pw:'61LM73', office:'대구사업소' },
-  '경주4':    { pw:'61LM70', office:'대구사업소' },
-  '구미5':    { pw:'61LM71', office:'대구사업소' },
-  '달서5':    { pw:'61LM07', office:'대구사업소' },
-  '수성5':    { pw:'61LM75', office:'대구사업소' },
-  '안동5':    { pw:'61LM76', office:'대구사업소' },
-  '포항중앙2':{ pw:'61LM81', office:'대구사업소' },
-  '원주3':    { pw:'61LM77', office:'대구사업소' },
-  '춘천3':    { pw:'61LM79', office:'대구사업소' },
+  '대구3':    { office:'대구사업소' },
+  '경주4':    { office:'대구사업소' },
+  '구미5':    { office:'대구사업소' },
+  '달서5':    { office:'대구사업소' },
+  '수성5':    { office:'대구사업소' },
+  '안동5':    { office:'대구사업소' },
+  '포항중앙2':{ office:'대구사업소' },
+  '원주3':    { office:'대구사업소' },
+  '춘천3':    { office:'대구사업소' },
   // 부산사업소
-  '부산센텀4':    { pw:'61LM95', office:'부산사업소' },
-  '거제4':        { pw:'62LM39', office:'부산사업소' },
-  '김해2':        { pw:'61LM37', office:'부산사업소' },
-  '롯데동부산2':  { pw:'61LM88', office:'부산사업소' },
-  '마산6':        { pw:'61LM39', office:'부산사업소' },
-  '양산3':        { pw:'61LM41', office:'부산사업소' },
-  '연제4':        { pw:'61LM42', office:'부산사업소' },
-  '진주2':        { pw:'61LM45', office:'부산사업소' },
-  '창원3':        { pw:'61LM46', office:'부산사업소' },
-  '하단3':        { pw:'61LM47', office:'부산사업소' },
-  '롯데광복2':    { pw:'62LM25', office:'부산사업소' },
-  '롯데울산(팝업)':{ pw:'IL0029', office:'부산사업소' },
-  '울산5':        { pw:'IL0013', office:'부산사업소' },
+  '부산센텀4':    { office:'부산사업소' },
+  '거제4':        { office:'부산사업소' },
+  '김해2':        { office:'부산사업소' },
+  '롯데동부산2':  { office:'부산사업소' },
+  '마산6':        { office:'부산사업소' },
+  '양산3':        { office:'부산사업소' },
+  '연제4':        { office:'부산사업소' },
+  '진주2':        { office:'부산사업소' },
+  '창원3':        { office:'부산사업소' },
+  '하단3':        { office:'부산사업소' },
+  '롯데광복2':    { office:'부산사업소' },
+  '롯데울산(팝업)':{ office:'부산사업소' },
+  '울산5':        { office:'부산사업소' },
 };
 
 const ERP_ID   = '1FrCJW4PM7WTTEh_RwEUq1TGhg1IHXlkBQumXNUr2wQ0';
@@ -653,10 +654,8 @@ function populateStores() {
 
 function doLogin(){
   const store=document.getElementById('store-select').value;
-  const pw=document.getElementById('store-pw').value;
   const err=document.getElementById('login-error');
   if(!store){err.textContent='매장을 선택하세요.';return;}
-  // if(!STORES[store]||pw!==STORES[store].pw){err.textContent='비밀번호가 올바르지 않습니다.';return;}
   err.textContent='';
   currentStore=store;
   document.getElementById('login-screen').style.display='none';
@@ -670,7 +669,6 @@ function doLogout(){
   if(dongMapInst){dongMapInst.remove();dongMapInst=null;}
   document.getElementById('dashboard').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  document.getElementById('store-pw').value='';
   Object.keys(charts).forEach(id=>destroyChart(id));
 }
 
