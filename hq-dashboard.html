@@ -179,14 +179,17 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
     <a class="nav-item" onclick="showSection('weekly')">
       <span class="nav-icon">📈</span><span class="nav-label">주간 수주 추이</span>
     </a>
-    <a class="nav-item" onclick="showSection('anomaly')">
-      <span class="nav-icon">🔎</span><span class="nav-label">이상 탐지 & 메모</span>
+    <a class="nav-item" onclick="showSection('region')">
+      <span class="nav-icon">🗺️</span><span class="nav-label">지역별 수주/매출현황</span>
     </a>
     <a class="nav-item" onclick="showSection('series')">
-      <span class="nav-icon">📊</span><span class="nav-label">품목별 수주현황</span>
+      <span class="nav-icon">📊</span><span class="nav-label">품목별 수주/매출현황</span>
     </a>
     <a class="nav-item" onclick="showSection('copurchase')">
       <span class="nav-icon">🛒</span><span class="nav-label">함께 팔리는 품목</span>
+    </a>
+    <a class="nav-item" onclick="showSection('anomaly')">
+      <span class="nav-icon">🔎</span><span class="nav-label">이상 탐지 & 메모</span>
     </a>
     <a class="nav-item" onclick="showSection('monthly')">
       <span class="nav-icon">📋</span><span class="nav-label">월별 보고서</span>
@@ -240,7 +243,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
     </div>
     <div class="filter-group">
       <span class="filter-label">담당자</span>
-      <select class="filter-select" id="filter-manager" onchange="applyFilters()">
+      <select class="filter-select" id="filter-manager" onchange="onManagerFilterChange()">
         <option value="">전체</option>
       </select>
     </div>
@@ -528,6 +531,69 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
       </div>
     </div>
 
+    <!-- ══ 지역별 매출현황 ══ -->
+    <div id="section-region" class="section">
+      <div class="row row-1">
+        <div class="card">
+          <div class="card-title">지역 선택</div>
+          <div class="card-sub" id="region-select-sub">납품처(배송지) 주소 기준 · 시도 → 시군구 → 동 순으로 좁혀서 볼 수 있습니다 (2024-01~ 월 단위 집계)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 6px;">
+            <select class="filter-select" id="region-sido" onchange="onRegionSidoChange()">
+              <option value="">시도 전체</option>
+            </select>
+            <select class="filter-select" id="region-sigungu" onchange="onRegionSigunguChange()" disabled>
+              <option value="">시군구 전체</option>
+            </select>
+            <select class="filter-select" id="region-dong" onchange="onRegionDongChange()" disabled>
+              <option value="">동 전체</option>
+            </select>
+          </div>
+          <div id="region-breadcrumb" style="font-size:13px;"></div>
+        </div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card red">
+          <div class="kpi-label" id="region-kpi-total-label">YTD 매출액</div>
+          <div class="kpi-value" id="region-kpi-total">-<span class="kpi-unit">억</span></div>
+          <div class="kpi-sub" id="region-kpi-total-sub"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="region-kpi-stores-label">참여 매장</div>
+          <div class="kpi-value" id="region-kpi-stores">-<span class="kpi-unit">개점</span></div>
+          <div class="kpi-sub" id="region-kpi-stores-sub"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="region-kpi-monthly-label">당월 누계</div>
+          <div class="kpi-value" id="region-kpi-monthly">-<span class="kpi-unit">억</span></div>
+          <div class="kpi-sub" id="region-kpi-monthly-sub"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">전년 대비 (YoY)</div>
+          <div class="kpi-value" id="region-kpi-yoy">-<span class="kpi-unit">%</span></div>
+          <div class="kpi-sub" id="region-kpi-yoy-sub"></div>
+        </div>
+      </div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-title" id="region-rank-title">지역별 매출 순위</div>
+          <div class="card-sub" id="region-rank-sub"></div>
+          <div style="height:320px;"><canvas id="chart-region-rank"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">매장별 매출비중</div>
+          <div class="card-sub" id="region-store-mix-sub"></div>
+          <div style="height:320px;"><canvas id="chart-region-store-mix"></canvas></div>
+        </div>
+      </div>
+      <div class="row row-1">
+        <div class="card">
+          <div class="card-title">월별 매출 추이</div>
+          <div class="card-sub" id="region-trend-sub">2024-01 ~ 최신월 · 선택한 지역 기준 (전체 기간, 단위: 백만원)</div>
+          <div style="height:260px;"><canvas id="chart-region-trend"></canvas></div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -593,11 +659,19 @@ const MANAGER_SHEET_GIDS = [
 ];
 // 매장 매출 대시보드 취지에 안 맞는 채널/구분은 로드 시점에 제외 (수출·샘플·관계사·AS·기타·슬로우오프)
 const EXCLUDED_OFFICES = ['수출사업소','쌤플','관계사','하자조치','대리점기타','슬로우오프'];
+// 납품처(배송지) 시도/시군구/동 × 사업소 × 대리점 월별 집계. dashboard.html 지도용으로 이미 뽑아둔 시트를 재사용.
+const REGION_GID = '718018781';
+// 위와 동일 구조, 확정납기(매출) 기준. 별도 스프레드시트에 있음 (④B 쿼리).
+const REGION_SALES_ID  = '10bEVwcDtuVFADudyotRJ2KGU3kceEDzE9aEuMCKtyv4';
+const REGION_SALES_GID = '1804664026';
 
 let weeklyRows = [];      // {weekStart, office, store, cnt, amt} — 주문일자(수주) 기준, 주차 단위로 집계된 원본
 let salesWeeklyRows = []; // 위와 동일 구조, 확정납기(매출) 기준
 let itemRows = [];        // {weekStart, setCode, itemName, cnt, amt} — 품목별 주차 집계 (전사)
 let copurchaseRows = [];  // {codeA, nameA, codeB, nameB, cnt} — 품목 동시구매 쌍 (동시주문건수 내림차순)
+let regionRows = [];      // {month, office, store, sido, sigungu, dong, cnt, amt} — 주문일자 기준, 월 단위 집계
+let regionSalesRows = []; // 위와 동일 구조, 확정납기(매출) 기준
+let regionFilters = { sido:'', sigungu:'', dong:'' };
 let storeManagerMap = {}; // 대리점명 -> {manager, distType:'직영'|'대리점'} — 과거 스냅샷까지 병합(유통망 분류용, 커버리지 우선)
 let latestManagerMap = {}; // 대리점명 -> {manager, distType} — 최신 시트 한 장만 반영(담당자 매칭/표시용, 최신성 우선)
 let storeOfficeMap = {};
@@ -709,6 +783,38 @@ function parseWeeklyCsv(text){
     if(!office || !store || !/^\d{4}-\d{2}-\d{2}$/.test(weekStart)) continue;
     rows.push({
       weekStart, office, store,
+      cnt: parseInt(get('cnt').replace(/[,\s]/g,''))||0,
+      amt: parseInt(get('amt').replace(/[,\s]/g,''))||0,
+    });
+  }
+  return rows;
+}
+
+// 행정구역 개편으로 이름이 바뀐 시도(강원도→강원특별자치도, 전라북도→전북특별자치도)는
+// 같은 지역인데 시기별로 다른 이름이 섞여 있으면 드롭다운에 중복으로 뜨니 최신 명칭으로 통일한다.
+// "전남광주통합특별시"처럼 서로 다른 시도가 합쳐진 신설 명칭은 별도 지역으로 그대로 둔다(경계가 달라 병합 불가).
+const SIDO_ALIAS = { '강원도':'강원특별자치도', '전라북도':'전북특별자치도' };
+function normalizeSido(s){ return SIDO_ALIAS[s] || s; }
+
+// 납품처(배송지) 시도/시군구/동 × 사업소 × 대리점 월별 집계 파서 — 주문일자 기준(수주건수·수주금액)
+function parseRegionCsv(text){
+  const lines = text.replace(/\r/g, '').trim().split('\n');
+  const h = parseCSVLine(lines[0]);
+  const idx = {
+    month: h.indexOf('월'), office: h.indexOf('실적사업소'), store: h.indexOf('실적대리점'),
+    sido: h.indexOf('시도'), sigungu: h.indexOf('시군구'), dong: h.indexOf('동'),
+    cnt: h.indexOf('수주건수'), amt: h.indexOf('수주금액'),
+  };
+  const rows = [];
+  for(let i=1;i<lines.length;i++){
+    const c = parseCSVLine(lines[i]);
+    if(c.length < 5) continue;
+    const get = k => (c[idx[k]]||'').replace(/"/g,'').trim();
+    const office = get('office'), store = get('store'), month = get('month');
+    if(!office || !store || !/^\d{4}-\d{2}$/.test(month)) continue;
+    rows.push({
+      month, office, store,
+      sido: normalizeSido(get('sido')), sigungu: get('sigungu'), dong: get('dong'),
       cnt: parseInt(get('cnt').replace(/[,\s]/g,''))||0,
       amt: parseInt(get('amt').replace(/[,\s]/g,''))||0,
     });
@@ -853,17 +959,21 @@ function growthCell(curAmt, prevAmt, prevExists){
 
 async function loadRealData(){
   try{
-    const [weeklyRes, salesRes, itemRes, copurchaseRes] = await Promise.all([
+    const [weeklyRes, salesRes, itemRes, copurchaseRes, regionRes, regionSalesRes] = await Promise.all([
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${WEEKLY_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${WEEKLY_SALES_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${ITEM_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${COPURCHASE_GID}`),
+      fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${REGION_GID}`),
+      fetch(`https://docs.google.com/spreadsheets/d/${REGION_SALES_ID}/export?format=csv&gid=${REGION_SALES_GID}`),
     ]);
-    const [weeklyText, salesText, itemText, copurchaseText] = await Promise.all([weeklyRes.text(), salesRes.text(), itemRes.text(), copurchaseRes.text()]);
+    const [weeklyText, salesText, itemText, copurchaseText, regionText, regionSalesText] = await Promise.all([weeklyRes.text(), salesRes.text(), itemRes.text(), copurchaseRes.text(), regionRes.text(), regionSalesRes.text()]);
     weeklyRows = parseWeeklyCsv(weeklyText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
     salesWeeklyRows = parseWeeklyCsv(salesText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
     itemRows = parseItemCsv(itemText);
     copurchaseRows = parseCoPurchaseCsv(copurchaseText);
+    regionRows = parseRegionCsv(regionText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
+    regionSalesRows = parseRegionCsv(regionSalesText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
   }catch(e){
     console.error('주간 집계 데이터 로드 실패', e);
     document.getElementById('h-update').textContent = '⚠ 데이터 로드 실패';
@@ -945,6 +1055,39 @@ function setFilter(type, val, btn) {
   applyFilters();
 }
 function applyFilters(){ renderSection(currentActiveSection()); }
+
+// 담당자를 지정하면, 그 담당자가 실제로 담당하는 매장들의 유통망/사업소만 드롭다운에 남겨서
+// 있지도 않은 조합(예: 담당 안 하는 사업소)을 고르지 못하게 한다.
+function onManagerFilterChange(){
+  const manager = document.getElementById('filter-manager').value;
+  const distSel = document.getElementById('filter-disttype');
+  const officeSel = document.getElementById('filter-office');
+  const prevDist = distSel.value;
+  const prevOffice = officeSel.value;
+
+  if(!manager){
+    distSel.innerHTML = '<option value="">전체</option><option value="직영">직영</option><option value="대리점">대리점</option>';
+    officeSel.innerHTML = '<option value="">전체</option>' + OFFICES.map(o=>`<option>${o}</option>`).join('');
+    distSel.value = ['직영','대리점'].includes(prevDist) ? prevDist : '';
+    officeSel.value = OFFICES.includes(prevOffice) ? prevOffice : '';
+    applyFilters();
+    return;
+  }
+
+  const managerStores = Object.keys(latestManagerMap).filter(s => latestManagerMap[s].manager===manager);
+  const distSet = new Set(managerStores.map(s => latestManagerMap[s].distType).filter(Boolean));
+  const officeSet = new Set(managerStores.map(s => storeOfficeMap[s]).filter(Boolean));
+
+  const distOptions = ['직영','대리점'].filter(d => distSet.has(d));
+  distSel.innerHTML = '<option value="">전체</option>' + distOptions.map(d=>`<option>${d}</option>`).join('');
+  distSel.value = distOptions.includes(prevDist) ? prevDist : '';
+
+  const officeOptions = OFFICES.filter(o => officeSet.has(o));
+  officeSel.innerHTML = '<option value="">전체</option>' + officeOptions.map(o=>`<option>${o}</option>`).join('');
+  officeSel.value = officeOptions.includes(prevOffice) ? prevOffice : '';
+
+  applyFilters();
+}
 function currentActiveSection(){
   const active = document.querySelector('.section.active');
   return active ? active.id.replace('section-','') : 'ranking';
@@ -980,7 +1123,7 @@ function renderSection(name){
     ranking: renderRanking, channel: renderChannel,
     weekly: renderWeekly,   anomaly: renderAnomaly,
     series: renderSeries,   copurchase: renderCopurchase,
-    monthly: renderMonthly,
+    monthly: renderMonthly, region: renderRegion,
   };
   if(fns[name]) fns[name]();
 }
@@ -1764,6 +1907,260 @@ function renderMonthly(){
       <tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${OFFICE_COLORS[o]};margin-right:6px;"></span>${o}</td>
       ${months.map(m=>`<td style="text-align:right">${fmt(won2m(monthMap[m][o]||0))}</td>`).join('')}</tr>`).join('')}
     </tbody></table>`;
+}
+
+// ── 지역별 매출현황 ──
+// 시도/시군구/동 드릴다운은 regionFilters에 상태를 두고, 사업소/채널/담당자/유통망 등 상단 공용 필터는
+// 다른 탭과 동일하게 적용한다(단, 이 데이터는 주문일자 기준만 있어 기준(수주/매출) 토글은 영향이 없음).
+function getRegionBaseRows(){
+  const office = document.getElementById('filter-office').value;
+  const manager = document.getElementById('filter-manager').value;
+  const distType = document.getElementById('filter-disttype').value;
+  const ch = currentFilters.channel;
+  const source = currentFilters.basis==='sales' ? regionSalesRows : regionRows;
+  return source.filter(r =>
+    (!office || r.office===office) &&
+    (ch==='all' || channelOf(r.office)===(ch==='online'?'온라인':'오프라인')) &&
+    (!manager || latestManagerMap[r.store]?.manager===manager) &&
+    (!distType || getDistType(r.store)===distType)
+  );
+}
+function getFilteredRegionRows(){
+  return getRegionBaseRows().filter(r =>
+    (!regionFilters.sido || r.sido===regionFilters.sido) &&
+    (!regionFilters.sigungu || r.sigungu===regionFilters.sigungu) &&
+    (!regionFilters.dong || r.dong===regionFilters.dong)
+  );
+}
+
+function onRegionSidoChange(){
+  regionFilters.sido = document.getElementById('region-sido').value;
+  regionFilters.sigungu = ''; regionFilters.dong = '';
+  applyFilters();
+}
+function onRegionSigunguChange(){
+  regionFilters.sigungu = document.getElementById('region-sigungu').value;
+  regionFilters.dong = '';
+  applyFilters();
+}
+function onRegionDongChange(){
+  regionFilters.dong = document.getElementById('region-dong').value;
+  applyFilters();
+}
+function jumpRegionBreadcrumb(level){
+  if(level==='all'){ regionFilters.sido=''; regionFilters.sigungu=''; regionFilters.dong=''; }
+  else if(level==='sido'){ regionFilters.sigungu=''; regionFilters.dong=''; }
+  else if(level==='sigungu'){ regionFilters.dong=''; }
+  applyFilters();
+}
+
+// 상위 레벨이 정해져야 하위 드롭다운이 의미가 있으므로(시군구는 시도가 있어야, 동은 시군구까지 있어야)
+// 선택 안 된 하위 단계는 비활성화하고, 옵션은 매출액 큰 순으로 정렬해 상위 지역이 먼저 보이게 한다.
+function populateRegionSelects(baseRows){
+  const sidoTotals = {};
+  baseRows.forEach(r=>{ if(r.sido) sidoTotals[r.sido] = (sidoTotals[r.sido]||0) + r.amt; });
+  const sidoList = Object.keys(sidoTotals).sort((a,b)=>sidoTotals[b]-sidoTotals[a]);
+  const sidoSel = document.getElementById('region-sido');
+  sidoSel.innerHTML = '<option value="">시도 전체</option>' + sidoList.map(s=>`<option>${s}</option>`).join('');
+  sidoSel.value = regionFilters.sido;
+
+  // 시군구/동은 후보가 많아 매출순으로 두면 원하는 지역을 찾기 어려워, 가나다순으로 정렬한다
+  // (제일 위의 시도만 규모가 큰 곳부터 보이는 게 유용해 매출순 그대로 둠).
+  const sigunguSel = document.getElementById('region-sigungu');
+  if(regionFilters.sido){
+    const t = {};
+    baseRows.filter(r=>r.sido===regionFilters.sido && r.sigungu).forEach(r=>{ t[r.sigungu]=(t[r.sigungu]||0)+r.amt; });
+    const list = Object.keys(t).sort((a,b)=>a.localeCompare(b,'ko'));
+    sigunguSel.innerHTML = '<option value="">시군구 전체</option>' + list.map(s=>`<option>${s}</option>`).join('');
+    sigunguSel.value = regionFilters.sigungu;
+    sigunguSel.disabled = false;
+  } else {
+    sigunguSel.innerHTML = '<option value="">시군구 전체</option>';
+    sigunguSel.disabled = true;
+  }
+
+  const dongSel = document.getElementById('region-dong');
+  if(regionFilters.sido && regionFilters.sigungu){
+    const t = {};
+    baseRows.filter(r=>r.sido===regionFilters.sido && r.sigungu===regionFilters.sigungu && r.dong).forEach(r=>{ t[r.dong]=(t[r.dong]||0)+r.amt; });
+    const list = Object.keys(t).sort((a,b)=>a.localeCompare(b,'ko'));
+    dongSel.innerHTML = '<option value="">동 전체</option>' + list.map(s=>`<option>${s}</option>`).join('');
+    dongSel.value = regionFilters.dong;
+    dongSel.disabled = false;
+  } else {
+    dongSel.innerHTML = '<option value="">동 전체</option>';
+    dongSel.disabled = true;
+  }
+}
+
+function renderRegionBreadcrumb(){
+  const parts = [{label:'전체', level:'all'}];
+  if(regionFilters.sido) parts.push({label:regionFilters.sido, level:'sido'});
+  if(regionFilters.sigungu) parts.push({label:regionFilters.sigungu, level:'sigungu'});
+  if(regionFilters.dong) parts.push({label:regionFilters.dong, level:'dong'});
+  document.getElementById('region-breadcrumb').innerHTML = parts.map((p,i)=>{
+    const isLast = i===parts.length-1;
+    return isLast
+      ? `<span style="font-weight:700;color:#c80a1e;">${p.label}</span>`
+      : `<span style="cursor:pointer;text-decoration:underline;color:#2563eb;" onclick="jumpRegionBreadcrumb('${p.level}')">${p.label}</span>`;
+  }).join(' <span style="color:#ccc;">›</span> ');
+}
+
+function renderRegion(){
+  const baseRows = getRegionBaseRows();
+  populateRegionSelects(baseRows);
+  renderRegionBreadcrumb();
+  document.getElementById('region-select-sub').textContent =
+    `납품처(배송지) 주소 기준 · 시도 → 시군구 → 동 순으로 좁혀서 볼 수 있습니다 · ${currentFilters.basis==='sales'?'확정납기(매출) 기준':'주문일자(수주) 기준'} (2024-01~ 월 단위 집계)`;
+
+  const rows = getFilteredRegionRows();
+  const rankTitleEl = document.getElementById('region-rank-title');
+
+  if(!rows.length){
+    ['region-kpi-total','region-kpi-stores','region-kpi-monthly','region-kpi-yoy'].forEach(id=>document.getElementById(id).innerHTML='-');
+    destroyChart('regionRank'); destroyChart('regionStoreMix'); destroyChart('regionTrend');
+    document.getElementById('region-rank-sub').textContent = '조건에 맞는 데이터가 없습니다.';
+    document.getElementById('region-store-mix-sub').textContent = '';
+    return;
+  }
+
+  // 미래월은 없는 데이터지만(주문일자 기준 실적), 혹시 모를 케이스를 대비해 오늘이 속한 달까지만 "최신월"로 본다.
+  const thisMonthCap = toISODate(new Date()).slice(0,7);
+  let maxMonth = null;
+  rows.forEach(r=>{ if(r.month<=thisMonthCap && (!maxMonth||r.month>maxMonth)) maxMonth=r.month; });
+  if(!maxMonth) rows.forEach(r=>{ if(!maxMonth||r.month>maxMonth) maxMonth=r.month; });
+
+  const year = maxMonth.slice(0,4), lastYear = String(+year-1);
+  const ytdStart = year+'-01';
+  const pyStart = lastYear+'-01', pyMonth = lastYear+'-'+maxMonth.slice(5);
+  let pmYear=+maxMonth.slice(0,4), pmMon=+maxMonth.slice(5,7)-1;
+  if(pmMon<1){ pmMon=12; pmYear-=1; }
+  const prevMonth = `${pmYear}-${String(pmMon).padStart(2,'0')}`;
+  const isMonth = currentFilters.period==='month';
+
+  let ytdAmt=0, monthAmt=0, pyYtdAmt=0, pyMonthAmt=0, prevMonthAmt=0;
+  const storesYtd=new Set(), storesMonth=new Set();
+  rows.forEach(r=>{
+    if(r.month>=ytdStart && r.month<=maxMonth){ ytdAmt+=r.amt; storesYtd.add(r.store); }
+    if(r.month===maxMonth){ monthAmt+=r.amt; storesMonth.add(r.store); }
+    if(r.month>=pyStart && r.month<=pyMonth) pyYtdAmt+=r.amt;
+    if(r.month===pyMonth) pyMonthAmt+=r.amt;
+    if(r.month===prevMonth) prevMonthAmt+=r.amt;
+  });
+
+  document.getElementById('region-kpi-total-label').textContent = isMonth ? '당월 매출액' : 'YTD 매출액';
+  document.getElementById('region-kpi-total').innerHTML = won2b(isMonth?monthAmt:ytdAmt).toFixed(1)+'<span class="kpi-unit">억</span>';
+  document.getElementById('region-kpi-total-sub').textContent = isMonth ? `${maxMonth} 누계` : `${ytdStart} ~ ${maxMonth} 누계`;
+
+  document.getElementById('region-kpi-stores').innerHTML = (isMonth?storesMonth.size:storesYtd.size)+'<span class="kpi-unit">개점</span>';
+  document.getElementById('region-kpi-stores-sub').textContent = isMonth ? `${maxMonth} 당월` : 'YTD';
+
+  if(isMonth){
+    const mom = pctChange(monthAmt, prevMonthAmt);
+    document.getElementById('region-kpi-monthly-label').textContent = '전월 대비 (MoM)';
+    document.getElementById('region-kpi-monthly').innerHTML = (mom===null?'-':(mom>=0?'+':'')+mom.toFixed(1))+'<span class="kpi-unit">%</span>';
+    document.getElementById('region-kpi-monthly').style.color = mom===null?'#333':pctColor(mom);
+    document.getElementById('region-kpi-monthly-sub').textContent = mom===null?'전월 비교 불가 (데이터 부족)':`${prevMonth} 대비`;
+  } else {
+    document.getElementById('region-kpi-monthly-label').textContent = '당월 누계';
+    document.getElementById('region-kpi-monthly').style.color = '';
+    document.getElementById('region-kpi-monthly').innerHTML = won2b(monthAmt).toFixed(1)+'<span class="kpi-unit">억</span>';
+    document.getElementById('region-kpi-monthly-sub').textContent = `${maxMonth} 누계`;
+  }
+
+  const yoy = isMonth ? pctChange(monthAmt, pyMonthAmt) : pctChange(ytdAmt, pyYtdAmt);
+  document.getElementById('region-kpi-yoy').innerHTML = (yoy===null?'-':(yoy>=0?'+':'')+yoy.toFixed(1))+'<span class="kpi-unit">%</span>';
+  document.getElementById('region-kpi-yoy').style.color = yoy===null?'#333':pctColor(yoy);
+  document.getElementById('region-kpi-yoy-sub').textContent = yoy===null
+    ? '전년 동기 비교 불가 (데이터 부족)'
+    : (isMonth ? `${pyMonth} 대비` : `${pyStart}~${pyMonth} 대비`);
+
+  // 랭킹/비중 차트는 기간 탭(YTD 전체/당월)에 맞춰 같은 범위로 집계
+  const inScope = r => isMonth ? r.month===maxMonth : (r.month>=ytdStart && r.month<=maxMonth);
+  const scopedRows = rows.filter(inScope);
+
+  // "지역별 매출 순위"는 드릴다운 단계와 상관없이 항상 시/도(가장 큰 구분 단위) 기준으로 고정한다.
+  // 시군구/동 단위로 더 좁히는 건 위쪽 드롭다운으로 하고, 이 차트는 흔들리지 않는 전국 기준선 역할만 한다.
+  const sidoTotals = {};
+  baseRows.filter(inScope).forEach(r=>{ if(r.sido) sidoTotals[r.sido] = (sidoTotals[r.sido]||0) + r.amt; });
+  const sidoSorted = Object.entries(sidoTotals).sort((a,b)=>b[1]-a[1]);
+
+  rankTitleEl.textContent = '지역별 매출 순위 (시/도 기준)';
+  document.getElementById('region-rank-sub').textContent =
+    `${isMonth?maxMonth+' 당월':'YTD'} 누계 (단위: 억원) · 막대 클릭 시 해당 시/도로 필터링 (다시 클릭하면 전체 보기)`;
+  // 시도가 17~18개까지 나올 수 있어 고정 320px로는 다 못 보여줄 수 있음 — 사업소별 수주 차트와 동일하게 항목 수에 맞춰 늘린다.
+  document.getElementById('chart-region-rank').parentElement.style.height = Math.max(320, sidoSorted.length*22)+'px';
+  destroyChart('regionRank');
+  charts['regionRank'] = new Chart(document.getElementById('chart-region-rank'),{
+    type:'bar',
+    data:{
+      labels: sidoSorted.map(([k])=>k),
+      datasets:[{ data: sidoSorted.map(([,v])=>won2b(v)),
+        backgroundColor: sidoSorted.map(([k],i)=> !regionFilters.sido
+          ? STORE_MIX_PALETTE[i % STORE_MIX_PALETTE.length]
+          : (k===regionFilters.sido ? '#c80a1e' : '#d1d5db')),
+        borderRadius:3 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(2)}억원 (클릭 시 필터링)`}} },
+      scales:{ x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'억'}}, y:{grid:{display:false}} },
+      onHover:(evt,elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+      onClick:(evt,elements)=>{
+        if(!elements.length) return;
+        const key = sidoSorted[elements[0].index][0];
+        regionFilters.sido = regionFilters.sido===key ? '' : key;
+        regionFilters.sigungu=''; regionFilters.dong='';
+        applyFilters();
+      }
+    }
+  });
+
+  // 매장별 매출비중: 현재 선택된 지역(전체~동까지 어느 단계든) 안에서 매장별 상위 9개 + 기타
+  const storeTotals = {};
+  scopedRows.forEach(r=>{ storeTotals[r.store] = (storeTotals[r.store]||0) + r.amt; });
+  const sortedStores = Object.entries(storeTotals).sort((a,b)=>b[1]-a[1]);
+  const topStores = sortedStores.slice(0,9);
+  const otherSum = sortedStores.slice(9).reduce((s,[,v])=>s+v,0);
+  const storeEntries = otherSum>0 ? [...topStores, ['기타', otherSum]] : topStores;
+  const storeMixVals = storeEntries.map(([,v])=>won2b(v));
+  const storeMixTotal = storeMixVals.reduce((s,v)=>s+v,0);
+  const storeMixLabels = storeEntries.map(([s],i)=>`${s} (${storeMixTotal ? (storeMixVals[i]/storeMixTotal*100).toFixed(1) : '0.0'}%)`);
+  const storeMixColors = storeEntries.map(([s],i)=> s==='기타' ? STORE_MIX_OTHER_COLOR : STORE_MIX_PALETTE[i % STORE_MIX_PALETTE.length]);
+  const regionLabel = regionFilters.dong || regionFilters.sigungu || regionFilters.sido || '전체';
+
+  destroyChart('regionStoreMix');
+  charts['regionStoreMix'] = new Chart(document.getElementById('chart-region-store-mix'),{
+    type:'doughnut',
+    data:{ labels: storeMixLabels, datasets:[{ data: storeMixVals, backgroundColor: storeMixColors, borderWidth:0 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{
+        legend:{position:'bottom',labels:{font:{family:'Noto Sans KR',size:11},padding:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw.toFixed(2)}억원`}}
+      }
+    }
+  });
+  document.getElementById('region-store-mix-sub').textContent = `${isMonth?maxMonth+' 당월':'YTD'} 누계 · ${regionLabel} 매장별 비중`;
+
+  // 월별 추이는 기간 탭과 무관하게 항상 전체 기간(2024-01~) 기준으로 보여준다.
+  const monthTotals = {};
+  rows.forEach(r=>{ monthTotals[r.month] = (monthTotals[r.month]||0) + r.amt; });
+  const months = Object.keys(monthTotals).sort();
+  destroyChart('regionTrend');
+  charts['regionTrend'] = new Chart(document.getElementById('chart-region-trend'),{
+    type:'bar',
+    data:{
+      labels: months.map(m=>{ const [y,mm]=m.split('-'); return `${y}년 ${+mm}월`; }),
+      datasets:[{ data: months.map(m=>won2m(monthTotals[m]||0)), backgroundColor:'#2563eb', borderRadius:2 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(0)}백만원`}} },
+      scales:{ x:{grid:{display:false},ticks:{maxRotation:60,minRotation:60}}, y:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'백만'}} }
+    }
+  });
+  document.getElementById('region-trend-sub').textContent = `${months[0]} ~ ${months[months.length-1]} · ${regionLabel} 기준 (전체 기간, 단위: 백만원)`;
 }
 
 // ── MEMO ──
