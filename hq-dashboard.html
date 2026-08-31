@@ -114,6 +114,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
 .kpi-value { font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 700; color: #333; }
 .kpi-card.red .kpi-value { color: #c80a1e; }
 .kpi-unit { font-size: 12px; color: #999; margin-left: 3px; }
+.kpi-pct { font-size: 13px; color: #666; margin-left: 6px; font-weight: 500; }
 .kpi-sub { font-size: 11px; color: #999; margin-top: 5px; }
 
 /* ── CHARTS ── */
@@ -272,7 +273,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
     <div id="section-ranking" class="section active">
       <div class="kpi-grid">
         <div class="kpi-card red">
-          <div class="kpi-label">YTD 전체 수주</div>
+          <div class="kpi-label" id="kpi-total-label">YTD 전체 수주</div>
           <div class="kpi-value" id="kpi-total">-<span class="kpi-unit">억</span></div>
           <div class="kpi-sub" id="kpi-total-sub"></div>
         </div>
@@ -282,7 +283,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
           <div class="kpi-sub" id="kpi-stores-sub">온라인 + 오프라인</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">당월 누계</div>
+          <div class="kpi-label" id="kpi-monthly-label">당월 누계</div>
           <div class="kpi-value" id="kpi-monthly">-<span class="kpi-unit">억</span></div>
           <div class="kpi-sub" id="kpi-monthly-sub"></div>
         </div>
@@ -304,7 +305,7 @@ body { font-family: 'Noto Sans KR', sans-serif; background: #F5F5F7; color: #333
           <div style="height:260px;"><canvas id="chart-office-rank"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-title">사업소 비중</div>
+          <div class="card-title" id="office-mix-title">사업소 비중</div>
           <div class="card-sub" id="office-mix-sub">YTD 사업소별 비중</div>
           <div style="height:260px;"><canvas id="chart-channel-mix"></canvas></div>
         </div>
@@ -541,6 +542,9 @@ let OFFICE_COLORS = {
   '광주사업소':'#16a34a','대구사업소':'#7c3aed','부산사업소':'#0891b2'
 };
 const EXTRA_OFFICE_PALETTE = ['#db2777','#65a30d','#ea580c','#4338ca','#0d9488','#a16207','#9333ea','#475569'];
+// 사업소 필터가 걸렸을 때 "사업소 비중" 카드가 매장별 비중으로 바뀌는데, 이때 상위 매장들을 구분할 색상 팔레트.
+const STORE_MIX_PALETTE = ['#2563eb','#c80a1e','#16a34a','#d97706','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#4338ca'];
+const STORE_MIX_OTHER_COLOR = '#9ca3af';
 const CHANNEL_COLORS = { '온라인': '#16a34a', '오프라인': '#2563eb' };
 // 실적사업소 값 중 온라인사업부·쇼핑몰만 온라인 채널, 나머지(6개 지역 사업소)는 오프라인.
 const ONLINE_OFFICES = ['온라인사업부', '쇼핑몰'];
@@ -578,7 +582,15 @@ const ITEM_GID   = '1832666150'; // 주차시작·세트코드·품목명·수�
 const COPURCHASE_GID = '787308848'; // 품목코드A·품목A·품목코드B·품목B·동시주문건수 (2024-01-01~, 동시주문건수 내림차순)
 // 매장별 담당자/유통망(직영·대리점) 매핑 시트. dashboard.html이 쓰는 STORE_LOC_ID 문서의 다른 탭.
 const STORE_MANAGER_ID  = '1lcSLFkm6CNU0JeGle4xCR0lU9L7uPCrcR6lenD4OH80';
-const STORE_MANAGER_GID = '1106539430';
+// "신규유통망(YY'MM월)" 매월 스냅샷 탭들(숨김 포함, 2024-04 ~ 2026-07). 마지막 값이 현재 보이는 탭(1106539430).
+// 매장별로 최신 스냅샷의 담당자/유통망을 우선시하되, 최신 탭에 없는 매장은 과거 스냅샷에서라도 매칭시켜
+// 커버리지를 늘리기 위해 오래된 순 -> 최신 순으로 병합한다.
+const MANAGER_SHEET_GIDS = [
+  '1724691670','809203787','844027075','1045553099','1343390225','1886203207','117501141',
+  '2093018280','1556578426','1521788617','209166423','1223093427','1554590352','327445356',
+  '539310783','753527804','2139354181','1108827393','839335722','587660485','406498926',
+  '2051458224','1331875454','546531733','777382178','1645827931','517036223','1106539430',
+];
 // 매장 매출 대시보드 취지에 안 맞는 채널/구분은 로드 시점에 제외 (수출·샘플·관계사·AS·기타·슬로우오프)
 const EXCLUDED_OFFICES = ['수출사업소','쌤플','관계사','하자조치','대리점기타','슬로우오프'];
 
@@ -586,8 +598,17 @@ let weeklyRows = [];      // {weekStart, office, store, cnt, amt} — 주문일�
 let salesWeeklyRows = []; // 위와 동일 구조, 확정납기(매출) 기준
 let itemRows = [];        // {weekStart, setCode, itemName, cnt, amt} — 품목별 주차 집계 (전사)
 let copurchaseRows = [];  // {codeA, nameA, codeB, nameB, cnt} — 품목 동시구매 쌍 (동시주문건수 내림차순)
-let storeManagerMap = {}; // 대리점명 -> {manager, distType:'직영'|'대리점'} — 매핑 시트에 없는 매장은 키 자체가 없음
+let storeManagerMap = {}; // 대리점명 -> {manager, distType:'직영'|'대리점'} — 과거 스냅샷까지 병합(유통망 분류용, 커버리지 우선)
+let latestManagerMap = {}; // 대리점명 -> {manager, distType} — 최신 시트 한 장만 반영(담당자 매칭/표시용, 최신성 우선)
 let storeOfficeMap = {};
+
+// "OO서브"(예: 동탄서브3, 스타필드수원서브)는 입점몰 대리점의 매장 전시품 관리용 별도 계정이라
+// 담당자 매핑 시트에는 자기 이름으로 올라오지 않지만, 유통망 구분상 대리점으로 취급해야 한다.
+function getDistType(store){
+  if(storeManagerMap[store]) return storeManagerMap[store].distType;
+  if(/서브\d*$/.test(store)) return '대리점';
+  return '';
+}
 let weeklyAgg = null;     // 마지막으로 계산한 주차 집계 캐시 (주간/이상탐지 탭에서 사용)
 let selectedStores = [];  // 대리점별 꺾은선 비교 차트에 표시할 매장
 
@@ -647,7 +668,7 @@ function parseStoreManagerCsv(text){
     [0,1].forEach(b=>{
       const team = (r[teamIdxs[b]]||'').trim();
       const manager = (r[col('담당자',b)]||'').trim();
-      const store = (r[col('대리점',b)]||'').trim();
+      const store = normalizeMappingStoreName((r[col('대리점',b)]||'').trim());
       if(team) lastTeam[b]=team;
       if(manager) lastManager[b]=manager;
       if(store && !map[store]){
@@ -658,6 +679,13 @@ function parseStoreManagerCsv(text){
     });
   });
   return map;
+}
+
+// 담당자 매핑 시트는 "컬렉티브" 매장을 "(컬) 대구"처럼 축약 표기하지만,
+// ERP 원본 데이터의 매장명은 "대구컬렉티브"로 내려온다. 두 표기를 여기서 통일한다.
+function normalizeMappingStoreName(raw){
+  const m = raw.match(/^\(컬\)\s*(.+)$/);
+  return m ? m[1].trim()+'컬렉티브' : raw;
 }
 
 // DATAlink SQL의 DATEADD(day, -(DATEDIFF(day,0,주문일자)%7), ...)로 이미 "그 주의 월요일"로
@@ -736,17 +764,17 @@ function parseCoPurchaseCsv(text){
   return rows;
 }
 
-function getFilteredWeeklyRows(){
-  const office = document.getElementById('filter-office').value;
-  const manager = document.getElementById('filter-manager').value;
-  const distType = document.getElementById('filter-disttype').value;
-  const ch = currentFilters.channel;
+function getFilteredWeeklyRows(overrides){
+  const office = overrides?.office !== undefined ? overrides.office : document.getElementById('filter-office').value;
+  const manager = overrides?.manager !== undefined ? overrides.manager : document.getElementById('filter-manager').value;
+  const distType = overrides?.distType !== undefined ? overrides.distType : document.getElementById('filter-disttype').value;
+  const ch = overrides?.channel !== undefined ? overrides.channel : currentFilters.channel;
   const source = currentFilters.basis==='sales' ? salesWeeklyRows : weeklyRows;
   return source.filter(r =>
     (!office || r.office===office) &&
     (ch==='all' || channelOf(r.office)===(ch==='online'?'온라인':'오프라인')) &&
-    (!manager || storeManagerMap[r.store]?.manager===manager) &&
-    (!distType || storeManagerMap[r.store]?.distType===distType)
+    (!manager || latestManagerMap[r.store]?.manager===manager) &&
+    (!distType || getDistType(r.store)===distType)
   );
 }
 
@@ -825,25 +853,37 @@ function growthCell(curAmt, prevAmt, prevExists){
 
 async function loadRealData(){
   try{
-    const [weeklyRes, salesRes, itemRes, copurchaseRes, managerRes] = await Promise.all([
+    const [weeklyRes, salesRes, itemRes, copurchaseRes] = await Promise.all([
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${WEEKLY_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${WEEKLY_SALES_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${ITEM_GID}`),
       fetch(`https://docs.google.com/spreadsheets/d/${ERP_ID}/export?format=csv&gid=${COPURCHASE_GID}`),
-      fetch(`https://docs.google.com/spreadsheets/d/${STORE_MANAGER_ID}/export?format=csv&gid=${STORE_MANAGER_GID}`),
     ]);
-    const [weeklyText, salesText, itemText, copurchaseText, managerText] = await Promise.all([weeklyRes.text(), salesRes.text(), itemRes.text(), copurchaseRes.text(), managerRes.text()]);
+    const [weeklyText, salesText, itemText, copurchaseText] = await Promise.all([weeklyRes.text(), salesRes.text(), itemRes.text(), copurchaseRes.text()]);
     weeklyRows = parseWeeklyCsv(weeklyText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
     salesWeeklyRows = parseWeeklyCsv(salesText).filter(r => !EXCLUDED_OFFICES.includes(r.office));
     itemRows = parseItemCsv(itemText);
     copurchaseRows = parseCoPurchaseCsv(copurchaseText);
-    try{ storeManagerMap = parseStoreManagerCsv(managerText); }
-    catch(e){ console.error('담당자/유통망 매핑 로드 실패', e); storeManagerMap = {}; }
   }catch(e){
     console.error('주간 집계 데이터 로드 실패', e);
     document.getElementById('h-update').textContent = '⚠ 데이터 로드 실패';
     return;
   }
+
+  // 유통망(직영/대리점) 분류는 "신규유통망(YY'MM월)" 매월 스냅샷 탭들을 오래된 순 -> 최신 순으로 병합해
+  // 커버리지를 최대한 늘린다 (매장의 유통망 구분은 잘 안 바뀌므로 과거 스냅샷도 신뢰할 수 있음).
+  // 같은 매장이 여러 탭에 있으면 더 최근 스냅샷 값으로 덮어쓴다. 개별 탭 로드 실패는 무시하고 계속 진행한다.
+  storeManagerMap = {};
+  const managerMaps = await Promise.all(MANAGER_SHEET_GIDS.map(gid =>
+    fetch(`https://docs.google.com/spreadsheets/d/${STORE_MANAGER_ID}/export?format=csv&gid=${gid}`)
+      .then(r => r.text())
+      .then(text => parseStoreManagerCsv(text))
+      .catch(e => { console.error(`담당자 매핑 시트 로드 실패 (gid=${gid})`, e); return {}; })
+  ));
+  managerMaps.forEach(map => Object.assign(storeManagerMap, map));
+  // 담당자(사람)는 조직 변경으로 자주 바뀔 수 있으므로, 과거 스냅샷을 섞지 않고
+  // 가장 최신 탭(배열의 마지막 원소) 하나만으로 매칭/표시한다.
+  latestManagerMap = managerMaps[managerMaps.length - 1] || {};
 
   storeOfficeMap = {};
   const stores = new Set();
@@ -866,7 +906,7 @@ async function loadRealData(){
   const officeSel = document.getElementById('filter-office');
   officeSel.innerHTML = '<option value="">전체</option>' + OFFICES.map(o=>`<option>${o}</option>`).join('');
 
-  const managers = [...new Set(Object.values(storeManagerMap).map(v=>v.manager).filter(Boolean))].sort();
+  const managers = [...new Set(Object.values(latestManagerMap).map(v=>v.manager).filter(Boolean))].sort();
   const managerSel = document.getElementById('filter-manager');
   managerSel.innerHTML = '<option value="">전체</option>' + managers.map(m=>`<option>${m}</option>`).join('');
 
@@ -878,7 +918,7 @@ async function loadRealData(){
 
   const upd = document.getElementById('h-update');
   upd.textContent = maxWeek
-    ? `데이터 기준 ${maxWeek}~${addDaysStr(maxWeek,6)} · 매주 1회 수동 갱신`
+    ? `데이터 기준 ${maxWeek}~${addDaysStr(maxWeek,6)} · 매주 월 수동 갱신`
     : '데이터 없음';
 
   renderSection(currentActiveSection());
@@ -956,6 +996,8 @@ function renderRanking(){
 
   if(!maxWeek){
     ['kpi-total','kpi-stores','kpi-monthly','kpi-yoy'].forEach(id=>document.getElementById(id).innerHTML='-');
+    document.getElementById('kpi-total-label').textContent = currentFilters.period==='month' ? '당월 전체 수주' : 'YTD 전체 수주';
+    document.getElementById('kpi-monthly-label').textContent = currentFilters.period==='month' ? '전월 대비 (MoM)' : '당월 누계';
     destroyChart('officeRank'); destroyChart('channelMix'); destroyChart('storeRank'); destroyChart('channelShare');
     document.getElementById('rank-table-wrap').innerHTML = '<div class="no-data">조건에 맞는 데이터가 없습니다.</div>';
     return;
@@ -966,36 +1008,87 @@ function renderRanking(){
   const md = maxDate.slice(5);
   const ytdStart = year+'-01-01', pyStart = lastYear+'-01-01', pyEnd = lastYear+'-'+md;
   const curMonth = maxDate.slice(0,7);
+  const pyMonth = lastYear+'-'+curMonth.slice(5); // 전년 동월 (YoY-당월 비교용)
+  let pmYear = +curMonth.slice(0,4), pmMon = +curMonth.slice(5,7)-1;
+  if(pmMon<1){ pmMon=12; pmYear-=1; }
+  const prevMonth = `${pmYear}-${String(pmMon).padStart(2,'0')}`; // 직전 달 (MoM 비교용)
 
-  let ytdAmt=0, pyAmt=0, monthAmt=0;
+  const isMonth = currentFilters.period==='month';
+
+  let ytdAmt=0, pyAmt=0, monthAmt=0, pyMonthAmt=0, prevMonthAmt=0;
   const officeYtd={}, storeYtd={}, officeMonth={}, storeMonth={};
-  const stores = new Set();
+  const storesYtd=new Set(), storesMonth=new Set();
   for(const r of rows){
     const d = r.weekStart;
-    stores.add(r.store);
     if(d>=ytdStart && d<=maxDate){
-      ytdAmt+=r.amt; officeYtd[r.office]=(officeYtd[r.office]||0)+r.amt; storeYtd[r.store]=(storeYtd[r.store]||0)+r.amt;
+      ytdAmt+=r.amt; officeYtd[r.office]=(officeYtd[r.office]||0)+r.amt; storeYtd[r.store]=(storeYtd[r.store]||0)+r.amt; storesYtd.add(r.store);
     }
     if(d>=pyStart && d<=pyEnd) pyAmt+=r.amt;
-    if(d.slice(0,7)===curMonth){ monthAmt+=r.amt; officeMonth[r.office]=(officeMonth[r.office]||0)+r.amt; storeMonth[r.store]=(storeMonth[r.store]||0)+r.amt; }
+    if(d.slice(0,7)===curMonth){ monthAmt+=r.amt; officeMonth[r.office]=(officeMonth[r.office]||0)+r.amt; storeMonth[r.store]=(storeMonth[r.store]||0)+r.amt; storesMonth.add(r.store); }
+    if(d.slice(0,7)===pyMonth) pyMonthAmt+=r.amt;
+    if(d.slice(0,7)===prevMonth) prevMonthAmt+=r.amt;
   }
-  const yoy = pctChange(ytdAmt, pyAmt);
 
-  document.getElementById('kpi-total').innerHTML = won2b(ytdAmt).toFixed(1)+'<span class="kpi-unit">억</span>';
-  document.getElementById('kpi-total-sub').textContent = `${ytdStart} ~ ${maxDate} 누계 (주차 기준 근사)`;
-  document.getElementById('kpi-stores').innerHTML = stores.size+'<span class="kpi-unit">개점</span>';
+  // 유통망(직영/대리점) 필터가 걸려있으면, 같은 채널/사업소/담당자 조건에서 유통망 구분 없는 전체 대비
+  // 이 유통망이 차지하는 비중(%)을 KPI 옆에 같이 보여준다 (직관성 우선 원칙).
+  const distType = document.getElementById('filter-disttype').value;
+  let ytdDistPct = null, monthDistPct = null;
+  if(distType){
+    const distTotalRows = getFilteredWeeklyRows({distType:''});
+    let ytdTotal=0, monthTotal=0;
+    for(const r of distTotalRows){
+      const d = r.weekStart;
+      if(d>=ytdStart && d<=maxDate) ytdTotal+=r.amt;
+      if(d.slice(0,7)===curMonth) monthTotal+=r.amt;
+    }
+    ytdDistPct = ytdTotal ? (ytdAmt/ytdTotal*100) : null;
+    monthDistPct = monthTotal ? (monthAmt/monthTotal*100) : null;
+  }
+  const distPctLabel = currentFilters.channel==='online' ? '온라인' : currentFilters.channel==='offline' ? '오프라인' : '전체';
+
+  // 카드1: "기간" 필터(YTD 전체/당월)에 따라 총 수주 금액 자체가 바뀌도록 한다.
+  document.getElementById('kpi-total-label').textContent = isMonth ? '당월 전체 수주' : 'YTD 전체 수주';
+  const totalAmt = isMonth ? monthAmt : ytdAmt;
+  const totalDistPct = isMonth ? monthDistPct : ytdDistPct;
+  document.getElementById('kpi-total').innerHTML = won2b(totalAmt).toFixed(1)+'<span class="kpi-unit">억</span>'
+    + (totalDistPct!==null ? `<span class="kpi-pct">(${distPctLabel} ${totalDistPct.toFixed(1)}%)</span>` : '');
+  document.getElementById('kpi-total-sub').textContent = isMonth
+    ? `${curMonth} 누계`
+    : `${ytdStart} ~ ${maxDate} 누계 (주차 기준 근사)`;
+
+  // 카드2: 참여 점포 수도 같은 기간 기준으로 집계.
+  document.getElementById('kpi-stores').innerHTML = (isMonth?storesMonth.size:storesYtd.size)+'<span class="kpi-unit">개점</span>';
   {
     const officeSel = document.getElementById('filter-office').value;
     const chLabel = currentFilters.channel==='online' ? '온라인' : currentFilters.channel==='offline' ? '오프라인' : '온라인 + 오프라인';
-    document.getElementById('kpi-stores-sub').textContent = officeSel ? `${chLabel} · ${officeSel}` : chLabel;
+    const periodLabel = isMonth ? `${curMonth} 당월` : 'YTD';
+    document.getElementById('kpi-stores-sub').textContent = `${periodLabel} · ${chLabel}${officeSel?' · '+officeSel:''}`;
   }
-  document.getElementById('kpi-monthly').innerHTML = won2b(monthAmt).toFixed(1)+'<span class="kpi-unit">억</span>';
-  document.getElementById('kpi-monthly-sub').textContent = `${curMonth} 누계`;
+
+  // 카드3: 당월 선택 시엔 카드1과 같은 값(당월 누계)을 또 보여줄 필요가 없으니, 전월 대비(MoM) 성장률로 바꿔준다.
+  // YTD 선택 시엔 원래대로 "당월 누계" 참고용 숫자를 보여준다.
+  if(isMonth){
+    const mom = pctChange(monthAmt, prevMonthAmt);
+    document.getElementById('kpi-monthly-label').textContent = '전월 대비 (MoM)';
+    document.getElementById('kpi-monthly').innerHTML = (mom===null?'-':(mom>=0?'+':'')+mom.toFixed(1))+'<span class="kpi-unit">%</span>';
+    document.getElementById('kpi-monthly').style.color = mom===null?'#333':pctColor(mom);
+    document.getElementById('kpi-monthly-sub').textContent = mom===null?'전월 비교 불가 (데이터 부족)':`${prevMonth} 대비`;
+  } else {
+    document.getElementById('kpi-monthly-label').textContent = '당월 누계';
+    document.getElementById('kpi-monthly').style.color = '';
+    document.getElementById('kpi-monthly').innerHTML = won2b(monthAmt).toFixed(1)+'<span class="kpi-unit">억</span>'
+      + (monthDistPct!==null ? `<span class="kpi-pct">(${distPctLabel} ${monthDistPct.toFixed(1)}%)</span>` : '');
+    document.getElementById('kpi-monthly-sub').textContent = `${curMonth} 누계`;
+  }
+
+  // 카드4: 전년 대비(YoY)도 선택된 기간에 맞춰 "YTD vs 전년 동기" 또는 "당월 vs 전년 동월"로 전환.
+  const yoy = isMonth ? pctChange(monthAmt, pyMonthAmt) : pctChange(ytdAmt, pyAmt);
   document.getElementById('kpi-yoy').innerHTML = (yoy===null?'-':(yoy>=0?'+':'')+yoy.toFixed(1))+'<span class="kpi-unit">%</span>';
   document.getElementById('kpi-yoy').style.color = yoy===null?'#333':pctColor(yoy);
-  document.getElementById('kpi-yoy-sub').textContent = yoy===null?'전년 동기 비교 불가 (데이터 부족)':`${pyStart}~${pyEnd} 대비`;
+  document.getElementById('kpi-yoy-sub').textContent = yoy===null
+    ? '전년 동기 비교 불가 (데이터 부족)'
+    : (isMonth ? `${pyMonth} 대비` : `${pyStart}~${pyEnd} 대비`);
 
-  const isMonth = currentFilters.period==='month';
   const officeData = isMonth?officeMonth:officeYtd;
   const storeData  = isMonth?storeMonth:storeYtd;
   const officesPresent = OFFICES.filter(o=>officeData[o]);
@@ -1038,7 +1131,7 @@ function renderRanking(){
 
   // OFFICES가 이제 실데이터 기준 14개 안팎이라 고정 260px로는 막대가 너무 빽빽해질 수 있음
   document.getElementById('chart-office-rank').parentElement.style.height = Math.max(260, officesPresent.length*22)+'px';
-  document.getElementById('office-rank-sub').textContent = isMonth ? `${curMonth} 누계 (단위: 억원)` : `YTD 누계 (단위: 억원)`;
+  document.getElementById('office-rank-sub').textContent = (isMonth ? `${curMonth} 누계 (단위: 억원)` : `YTD 누계 (단위: 억원)`) + ' · 막대 클릭 시 해당 사업소로 필터링 (다시 클릭하면 전체 보기)';
 
   destroyChart('officeRank');
   charts['officeRank'] = new Chart(document.getElementById('chart-office-rank'),{
@@ -1050,20 +1143,49 @@ function renderRanking(){
     },
     options:{
       indexAxis:'y', responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(2)}억원`}} },
-      scales:{ x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'억'}}, y:{grid:{display:false}} }
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>` ${ctx.raw.toFixed(2)}억원 (클릭 시 이 사업소로 필터링)`}} },
+      scales:{ x:{grid:{color:'#F0F0F0'},ticks:{callback:v=>v+'억'}}, y:{grid:{display:false}} },
+      onHover:(evt,elements)=>{ evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+      onClick:(evt,elements)=>{
+        if(!elements.length) return;
+        const office = officesPresent[elements[0].index];
+        const officeFilterEl = document.getElementById('filter-office');
+        // 이미 선택돼있던 사업소를 다시 클릭하면(필터링된 상태라 막대가 하나뿐일 때) 전체 보기로 되돌린다.
+        officeFilterEl.value = officeFilterEl.value===office ? '' : office;
+        applyFilters();
+      }
     }
   });
 
-  const mixVals = officesPresent.map(o=>won2b(officeData[o]||0));
-  const mixTotal = mixVals.reduce((s,v)=>s+v,0);
+  // 사업소가 하나로 필터링되면 "사업소별 비중"은 100% 한 조각뿐이라 의미가 없다.
+  // 이때는 그 사업소 안의 매장별 매출 비중으로 바꿔서 보여준다 (상위 9개 + 기타).
+  const officeSelForMix = document.getElementById('filter-office').value;
+  let mixLabels, mixVals, mixColors;
+  if(officeSelForMix){
+    const sortedStores = Object.entries(storeData).sort((a,b)=>b[1]-a[1]);
+    const topStores = sortedStores.slice(0,9);
+    const otherSum = sortedStores.slice(9).reduce((s,[,v])=>s+v,0);
+    const entries = otherSum>0 ? [...topStores, ['기타', otherSum]] : topStores;
+    mixVals = entries.map(([,v])=>won2b(v));
+    const mixTotal = mixVals.reduce((s,v)=>s+v,0);
+    mixLabels = entries.map(([s],i)=>`${s} (${mixTotal ? (mixVals[i]/mixTotal*100).toFixed(1) : '0.0'}%)`);
+    mixColors = entries.map(([s],i)=> s==='기타' ? STORE_MIX_OTHER_COLOR : STORE_MIX_PALETTE[i % STORE_MIX_PALETTE.length]);
+    document.getElementById('office-mix-title').textContent = '매장 비중';
+    document.getElementById('office-mix-sub').textContent = `${isMonth?curMonth+' 당월':'YTD'} · ${officeSelForMix} 매장별 비중`;
+  } else {
+    mixVals = officesPresent.map(o=>won2b(officeData[o]||0));
+    const mixTotal = mixVals.reduce((s,v)=>s+v,0);
+    mixLabels = officesPresent.map((o,i)=>`${o} (${mixTotal ? (mixVals[i]/mixTotal*100).toFixed(1) : '0.0'}%)`);
+    mixColors = officesPresent.map(o=>OFFICE_COLORS[o]);
+    document.getElementById('office-mix-title').textContent = '사업소 비중';
+    document.getElementById('office-mix-sub').textContent = isMonth?`${curMonth} 사업소별 비중`:`YTD 사업소별 비중`;
+  }
   destroyChart('channelMix');
   charts['channelMix'] = new Chart(document.getElementById('chart-channel-mix'),{
     type:'doughnut',
     data:{
-      labels: officesPresent.map((o,i)=>`${o} (${mixTotal ? (mixVals[i]/mixTotal*100).toFixed(1) : '0.0'}%)`),
-      datasets:[{ data: mixVals,
-        backgroundColor: officesPresent.map(o=>OFFICE_COLORS[o]), borderWidth:0 }]
+      labels: mixLabels,
+      datasets:[{ data: mixVals, backgroundColor: mixColors, borderWidth:0 }]
     },
     options:{
       responsive:true, maintainAspectRatio:false, cutout:'60%',
@@ -1073,11 +1195,12 @@ function renderRanking(){
       }
     }
   });
-  document.getElementById('office-mix-sub').textContent = isMonth?`${curMonth} 사업소별 비중`:`YTD 사업소별 비중`;
 
   const sorted = Object.entries(storeData).sort((a,b)=>b[1]-a[1]).slice(0,20);
   const h = Math.max(280, sorted.length*28);
-  document.getElementById('rank-table-wrap').style.height = h+'px';
+  const rankWrap = document.getElementById('rank-table-wrap');
+  if(!rankWrap.querySelector('#chart-store-rank')) rankWrap.innerHTML = '<canvas id="chart-store-rank"></canvas>';
+  rankWrap.style.height = h+'px';
   document.getElementById('rank-table-sub').textContent = `${isMonth?curMonth+' 당월':'YTD'} 수주금액 기준 상위 ${sorted.length}개 대리점`;
   destroyChart('storeRank');
   charts['storeRank'] = new Chart(document.getElementById('chart-store-rank'),{
@@ -1104,8 +1227,8 @@ function renderChannel(){
   const distType = document.getElementById('filter-disttype').value;
   const rows = baseRows.filter(r =>
     (!officeSel || r.office===officeSel) &&
-    (!manager || storeManagerMap[r.store]?.manager===manager) &&
-    (!distType || storeManagerMap[r.store]?.distType===distType)
+    (!manager || latestManagerMap[r.store]?.manager===manager) &&
+    (!distType || getDistType(r.store)===distType)
   );
   if(!rows.length){
     ['chart-channel-compare','chart-yoy','chart-channel-yearly'].forEach(id=>destroyChart(id));
